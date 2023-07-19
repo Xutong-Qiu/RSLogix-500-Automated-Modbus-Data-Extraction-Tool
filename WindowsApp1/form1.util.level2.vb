@@ -1,5 +1,4 @@
-﻿Imports System.Text.RegularExpressionsVisualBasic
-
+﻿Imports System.Text.RegularExpressions
 Partial Class Form1
 
     Function ExtractAddresses(rung As String) As List(Of Tuple(Of String, String))
@@ -17,8 +16,8 @@ Partial Class Form1
     End Function
 
     Private coil_start = False
-    'Returns a list of tuple
 
+    'Returns a list of tuple
     Private Function ExtractMapping(str As String) As List(Of Tuple(Of String, String))
         Dim words As String() = str.Split(" "c)
         Dim results As New List(Of Tuple(Of String, String))
@@ -79,7 +78,7 @@ Partial Class Form1
         Return results
     End Function
 
-    Public Sub FindCoilMapping(bst As Node, results As List(Of Tuple(Of String, String)))
+    Private Sub FindCoilMapping(bst As Node, results As List(Of Tuple(Of String, String)))
         Dim count = 0
         For Each branch In bst.Children
             If branch.Last.Ins = "OR" Then
@@ -90,14 +89,25 @@ Partial Class Form1
                     End If
                 Else
                     'MessageBox.Show("Source: " & child.First.Children(0)(0).Args(0) & " DES: " & child.Last.Args(0) & "/" & count)
-                    If dataEntries(branch.First.Children(0)(0).Args(0)).Item1 <> "ALWAYS_OFF" Then
+                    Dim str = ""
+                        For i As Integer = 0 To branch.Count - 2
+                            str &= branch(i).ToString
+                        Next
                         results.Add(New Tuple(Of String, String)(branch.First.Children(0)(0).Args(0), branch.Last.Args(0) & "/" & count))
                         'MessageBox.Show("This coil address is mapped to multiple blocks: " & branch.Last.Args(0) & "/" & count & Environment.NewLine & branch.First.ToString())
+                        MessageBox.Show(str)
+
                     End If
-                End If
                 count += 1
             End If
 
         Next
     End Sub
+
+    Private Function makeupmapping(str As String, des As String) As String
+        Dim addrs As List(Of String) = New List(Of String)
+        Dim s = ""
+        MessageBox.Show(str)
+        Return s
+    End Function
 End Class

@@ -2,7 +2,7 @@
 
 Public Class Form1
     Private dataEntries As New SortedDictionary(Of String, Tuple(Of String, String))(New CustomComparer())
-    Private modbusDic As New Dictionary(Of String, List(Of String))
+    Private modbusDic As New SortedDictionary(Of String, List(Of String))(New CustomComparer())
     Private buttons As New List(Of Windows.Forms.Button)
     Private logixApp As Object = CreateObject("RSLogix500.Application")
     Private logixObj As Object
@@ -26,13 +26,21 @@ Public Class Form1
         If dataEntries.Count <> 0 Then
             Dim result As DialogResult = MessageBox.Show("Are you sure to load a new file?", "A File Has Been Loaded", MessageBoxButtons.YesNo)
             If result = DialogResult.Yes Then
+                If logixObj IsNot Nothing Then
+                    'change the second to true to save
+                    logixObj.close(True, False)
+                    logixObj = Nothing
+                End If
+                If logixApp IsNot Nothing Then
+                    logixApp.Quit(True, False)
+                    logixApp = Nothing
+                End If
                 dataEntries.Clear()
                 modbusDic.Clear()
             ElseIf result = DialogResult.No Then
                 Return
             End If
         End If
-        'logixApp = CreateObject("RSLogix500.Application")
         If logixApp Is Nothing Then 'Error checking, if gApplication is not set then display a message
             MessageBox.Show("ERROR: Failed to open RSLogix500 software.",
                             "ERROR: 001",
