@@ -99,7 +99,7 @@ Partial Class Form1
             If cur.Ins = "OR" Then
                 'MessageBox.Show(branch.Ins)
                 If rungSize = 2 AndAlso branch.Ins <> "BST" Then
-                    If dataEntries.ContainsKey(branch.Args(0)) AndAlso dataEntries(branch.Args(0)).Item1 <> "ALWAYS_OFF" Then
+                    If dataEntries(branch.Args(0)).Item1 <> "ALWAYS_OFF" Then
                         results.Add(New Tuple(Of String, String)(branch.Args(0), cur.Args(0) & "/" & count))
                     End If
                 ElseIf rungSize >= 2 Then
@@ -111,7 +111,7 @@ Partial Class Form1
                     End While
                     Dim des = cur.Args(0) & "/" & count
                     results.Add(New Tuple(Of String, String)(makeupmapping(related, des), des))
-                    'MessageBox.Show("This coil depends on multiple addresses: " & branch.ToString)
+                    'MessageBox.Show(des)
                 End If
                 count += 1
             End If

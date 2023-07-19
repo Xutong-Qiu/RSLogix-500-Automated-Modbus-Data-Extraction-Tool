@@ -1,4 +1,6 @@
-﻿Module Parser
+﻿Imports System.Drawing.Imaging
+
+Module Parser
     Public Function Parse(tokens As LinkedList(Of String)) As Node
         If tokens.First.Value = "SOR" Then
             tokens.RemoveFirst()
