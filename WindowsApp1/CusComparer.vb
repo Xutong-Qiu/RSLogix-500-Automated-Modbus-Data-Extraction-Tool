@@ -1,6 +1,14 @@
 ﻿Imports System.Text.RegularExpressions
 
-Public Class CustomComparer
+Public Class DataEntryComparer
+    Implements IComparer(Of String())
+
+    Public Function Compare(x() As String, y() As String) As Integer Implements IComparer(Of String()).Compare
+        Dim com = New AddrComparer
+        Return com.Compare(x(0), y(0))
+    End Function
+End Class
+Public Class AddrComparer
     Implements IComparer(Of String)
 
     Public Function Compare(x As String, y As String) As Integer Implements IComparer(Of String).Compare
