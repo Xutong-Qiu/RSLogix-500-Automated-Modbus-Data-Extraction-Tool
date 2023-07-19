@@ -1,8 +1,6 @@
 ﻿Imports System.IO
-Imports System.Text.RegularExpressions
 
 Public Class Form1
-    Implements IComparer(Of String)
     Private dataEntries As New SortedDictionary(Of String, Tuple(Of String, String))(New CustomComparer())
     Private modbusDic As New Dictionary(Of String, List(Of String))
     Private buttons As New List(Of Windows.Forms.Button)
@@ -10,7 +8,7 @@ Public Class Form1
     Private logixObj As Object
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        buttons = New List(Of Windows.Forms.Button) From {Search, find_invalid_mapping_button, export_data_button}
+        buttons = New List(Of Windows.Forms.Button) From {Search, find_invalid_mapping_button, load_data_button, perform_mapping}
         For Each btn In buttons
             btn.Enabled = False
         Next
@@ -76,6 +74,7 @@ Public Class Form1
 
     Private Sub Form1_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
         If logixObj IsNot Nothing Then
+            'change the second to true to save
             logixObj.close(True, False)
             logixObj = Nothing
         End If
@@ -164,7 +163,7 @@ Public Class Form1
 
     End Sub
 
-    Private Sub export_data_button_click(sender As Object, e As EventArgs) Handles export_data_button.Click
+    Private Sub load_data_button_click(sender As Object, e As EventArgs) Handles load_data_button.Click
         Dim data_collection = logixObj.AddrSymRecords
         LoadData(data_collection)
         Dim content = New List(Of String())
@@ -183,9 +182,29 @@ Public Class Form1
                 For Each s In modbusDic(addr)
                     str = str + " " + s
                     Dim record = logixObj.AddrSymRecords.GetRecordViaAddrOrSym(s, 0)
-                    If record IsNot Nothing Then
-                        record.SetSymbol(dataEntries(addr).Item1 + "_")
-                        record.SetDescription(dataEntries(addr).Item2)
+                    ' If record IsNot Nothing Then
+                    'MessageBox.Show(s & " " & record.Scope)
+                    'End If
+                    If record Is Nothing Then
+                        record = logixObj.AddrSymRecords.add()
+                        'MessageBox.Show("creating new addr: " + s)
+                        record.SetAddress(s)
+                        record.SetScope(0)
+                    End If
+                    Dim symbol = dataEntries(addr).Item1
+                    If symbol IsNot Nothing AndAlso symbol.Length + 1 >= logixApp.MaxSymbolLength - 1 Then
+                        symbol = symbol.Substring(0, symbol.Length - 2) + "_"
+                    Else
+                        symbol += "_"
+                    End If
+                    'If addr = "I:4.4" Then
+                    'MessageBox.Show(record.SetSymbol(symbol + "_"))
+                    'End If
+                    If record.SetSymbol(symbol) = False Then
+                        'MessageBox.Show("Unable to set name. Addr: " + s + " Source: " + addr + " " + symbol)
+                    End If
+                    If record.SetDescription(dataEntries(addr).Item2) = False Then
+                        'MessageBox.Show("Unable to set description. Addr: " + s + " Source: " + addr)
                     End If
                 Next
                 content.Add({addr, str, dataEntries(addr).Item1, dataEntries(addr).Item2})

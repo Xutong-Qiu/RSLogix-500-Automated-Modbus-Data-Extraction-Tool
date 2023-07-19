@@ -11,7 +11,7 @@ Partial Class Form1
     Friend WithEvents Label6 As Label
     Friend WithEvents GroupBox1 As GroupBox
     Friend WithEvents find_invalid_mapping_button As Button
-    Friend WithEvents export_data_button As Button
+    Friend WithEvents load_data_button As Button
     Friend WithEvents DataGridView1 As DataGridView
     Friend WithEvents perform_mapping As Button
 
@@ -44,7 +44,7 @@ Partial Class Form1
         Me.Label6 = New System.Windows.Forms.Label()
         Me.GroupBox1 = New System.Windows.Forms.GroupBox()
         Me.find_invalid_mapping_button = New System.Windows.Forms.Button()
-        Me.export_data_button = New System.Windows.Forms.Button()
+        Me.load_data_button = New System.Windows.Forms.Button()
         Me.DataGridView1 = New System.Windows.Forms.DataGridView()
         Me.perform_mapping = New System.Windows.Forms.Button()
         Me.GroupBox1.SuspendLayout()
@@ -136,14 +136,14 @@ Partial Class Form1
         Me.find_invalid_mapping_button.Text = "Find Invalid Mapping"
         Me.find_invalid_mapping_button.UseVisualStyleBackColor = True
         '
-        'export_data_button
+        'load_data_button
         '
-        Me.export_data_button.Location = New System.Drawing.Point(12, 106)
-        Me.export_data_button.Name = "export_data_button"
-        Me.export_data_button.Size = New System.Drawing.Size(157, 23)
-        Me.export_data_button.TabIndex = 12
-        Me.export_data_button.Text = "Load Database"
-        Me.export_data_button.UseVisualStyleBackColor = True
+        Me.load_data_button.Location = New System.Drawing.Point(12, 106)
+        Me.load_data_button.Name = "load_data_button"
+        Me.load_data_button.Size = New System.Drawing.Size(157, 23)
+        Me.load_data_button.TabIndex = 12
+        Me.load_data_button.Text = "Load Database"
+        Me.load_data_button.UseVisualStyleBackColor = True
         '
         'DataGridView1
         '
@@ -169,7 +169,7 @@ Partial Class Form1
         Me.ClientSize = New System.Drawing.Size(869, 450)
         Me.Controls.Add(Me.perform_mapping)
         Me.Controls.Add(Me.DataGridView1)
-        Me.Controls.Add(Me.export_data_button)
+        Me.Controls.Add(Me.load_data_button)
         Me.Controls.Add(Me.find_invalid_mapping_button)
         Me.Controls.Add(Me.GroupBox1)
         Me.Controls.Add(Me.load_file_button)

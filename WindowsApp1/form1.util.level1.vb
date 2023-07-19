@@ -1,58 +1,6 @@
 ﻿Imports System.IO
-Imports System.Text.RegularExpressions
 
 Partial Class Form1
-    Private Function Compare(x As String, y As String) As Integer Implements IComparer(Of String).Compare
-        Dim xSplit = x.Skip(1).ToString().Split(":"c)
-        Dim ySplit = y.Skip(1).ToString().Split(":"c)
-
-        ' Extract the numbers from the inputs.
-        Dim xFirst = Integer.Parse(xSplit(0))
-        Dim xSecond = Integer.Parse(xSplit(1))
-        Dim yFirst = Integer.Parse(ySplit(0))
-        Dim ySecond = Integer.Parse(ySplit(1))
-
-        ' If the first parts aren't equal, compare based on them.
-        If xFirst <> yFirst Then
-            Return xFirst.CompareTo(yFirst)
-        End If
-
-        ' If the first parts are equal, compare based on the second parts.
-        Return xSecond.CompareTo(ySecond)
-    End Function
-
-    Function ExtractAddresses(instruction As String) As Dictionary(Of String, String)
-        ' Define the regular expression pattern for addr format
-        Dim addr As String = "([A-Z]\d{0,2}:\d{1,2})"
-
-        Dim regex As New Regex("MOV " & addr & " " & addr)
-        Dim match As Match = regex.Match(instruction)
-
-        Dim result As New Dictionary(Of String, String)
-        If match.Success Then
-            result("addr1") = match.Groups(1).Value
-            result("addr2") = match.Groups(2).Value
-        End If
-
-        Return result
-    End Function
-
-
-    Private Function ExtractMapping(str As String) As List(Of Tuple(Of String, String))
-        Dim words As String() = str.Split(" "c)
-        Dim results As New List(Of Tuple(Of String, String))()
-
-        For i As Integer = 0 To words.Length - 3
-            If words(i) = "MOV" Then
-                Dim source As String = words(i + 1).Replace(".ACC", "")
-                results.Add(New Tuple(Of String, String)(source, words(i + 2)))
-            End If
-            If words(i) = "OR" Then
-                'MessageBox.Show(str)
-            End If
-        Next
-        Return results
-    End Function
 
     Private Sub LoadData(records As Object)
         Dim numOfRec = records.Count
@@ -60,10 +8,16 @@ Partial Class Form1
         For i As Integer = 0 To numOfRec - 1
             Data = records.GetRecordViaIndex(i)
             Dim str = Data.Description
+            'If Data.Address = "N17:21" Then
+            'MessageBox.Show(Data.Symbol)
+            'End If
             str = str.Replace(Environment.NewLine, " ")
             If Data.Address IsNot Nothing Then
                 If dataEntries.ContainsKey(Data.Address) Then
-                    dataEntries(Data.Address) = New Tuple(Of String, String)(Data.Symbol, str)
+                    If dataEntries(Data.Address).Item1 = "" Then
+                        'MessageBox.Show("repeat data: " + Data.Address + "New:" + Data.Symbol + "Old:" + dataEntries(Data.Address).Item1)
+                        dataEntries(Data.Address) = New Tuple(Of String, String)(Data.Symbol, str)
+                    End If
                 Else
                     dataEntries.Add(Data.Address, New Tuple(Of String, String)(Data.Symbol, str))
                 End If
@@ -92,6 +46,7 @@ Partial Class Form1
                     If Not modbusDic.ContainsKey(pair.Item1) Then
                         modbusDic.Add(pair.Item1, New List(Of String))
                     End If
+
                     modbusDic(pair.Item1).Add(pair.Item2)
                 Next
 

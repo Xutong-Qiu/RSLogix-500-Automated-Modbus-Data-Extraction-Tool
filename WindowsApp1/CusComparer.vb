@@ -4,30 +4,43 @@ Public Class CustomComparer
     Implements IComparer(Of String)
 
     Public Function Compare(x As String, y As String) As Integer Implements IComparer(Of String).Compare
-        Dim str = x + y
-        Dim addr As String = "^([A-Z]\d{1,3}:\d{1,3})([A-Z]\d{1,3}:\d{1,3})$"
+        Dim addr As String = "^([A-Z]){1,3}(\d{1,3}):(\d{1,3})(?:\/(\d{1,2}))*|(I|O):(\d{1,3}\.\d{1,3})$"
 
         Dim regex As New Regex(addr)
-        Dim match As Match = regex.Match(str)
-        Dim x1 As String = (x.Substring((1)))
-        Dim y1 As String = (y.Substring((1)))
-        ' Split the remaining string by ':'
-        Dim xnumbers As String() = x1.Split(":")
-        Dim ynumbers As String() = y1.Split(":")
-        If match.Success AndAlso xnumbers.Length = 2 AndAlso ynumbers.Length = 2 AndAlso xnumbers(0) <> "" AndAlso xnumbers(1) <> "" AndAlso ynumbers(0) <> "" AndAlso ynumbers(1) <> "" Then
-            ' Parse the split strings into integers
-            ' MessageBox.Show(ynumbers(1))
-            Dim xfirstNumber As Integer = Integer.Parse(xnumbers(0))
-            Dim xsecondNumber As Integer = Integer.Parse(xnumbers(1))
-            Dim yfirstNumber As Integer = Integer.Parse(ynumbers(0))
-            Dim ysecondNumber As Integer = Integer.Parse(ynumbers(1))
-            If xfirstNumber <> yfirstNumber Then
-                Return xfirstNumber.CompareTo(yfirstNumber)
-            Else
-                Return xsecondNumber.CompareTo(ysecondNumber)
-            End If
+        Dim matchx As Match = regex.Match(x)
+        Dim matchy As Match = regex.Match(y)
+        If matchx.Success = False Or matchy.Success = False Then
+            Return x.CompareTo(y)
         End If
-        Return x.CompareTo(y)
+        Dim xletter = If(matchx.Groups(1).ToString <> "", matchx.Groups(1).ToString, matchx.Groups(5).ToString)
+        Dim yletter = If(matchy.Groups(1).ToString <> "", matchy.Groups(1).ToString, matchy.Groups(5).ToString)
+        If xletter <> yletter Then
+            Return xletter.CompareTo(yletter)
+        End If
+        Dim xaddr1 = If(matchx.Groups(2).ToString <> "", matchx.Groups(2).ToString, matchx.Groups(6).ToString)
+        Dim yaddr1 = If(matchy.Groups(2).ToString <> "", matchy.Groups(2).ToString, matchy.Groups(6).ToString)
+        If xaddr1 <> yaddr1 Then
+            Return CSng(xaddr1).CompareTo(CSng(yaddr1))
+        End If
+        Dim xaddr2 = If(matchx.Groups(3).ToString <> "", matchx.Groups(3).ToString, matchx.Groups(6).ToString)
+        Dim yaddr2 = If(matchy.Groups(3).ToString <> "", matchy.Groups(3).ToString, matchy.Groups(6).ToString)
+
+        ' MessageBox.Show(xaddr2 + " " + yaddr2)
+        If xaddr2 <> yaddr2 Then
+            Return CSng(xaddr2).CompareTo(CSng(yaddr2))
+        End If
+        Dim xaddr3 = If(matchx.Groups(4).ToString <> "", matchx.Groups(4).ToString, matchx.Groups(7).ToString)
+        Dim yaddr3 = If(matchy.Groups(4).ToString <> "", matchy.Groups(4).ToString, matchy.Groups(7).ToString)
+        If xaddr3 <> yaddr3 Then
+            If xaddr3 = "" Then
+                Return -1
+            End If
+            If yaddr3 = "" Then
+                Return 1
+            End If
+            Return CSng(xaddr3).CompareTo(CSng(yaddr3))
+        End If
+        Return xaddr3.CompareTo(yaddr3)
     End Function
 
 End Class
