@@ -36,16 +36,25 @@ Partial Class Form1
             'End If
             If coil_start AndAlso words(i) = "OR" Then
                 ' MessageBox.Show(str)
-                Dim ans As List(Of Node) = Parser.Parse(New LinkedList(Of String)(words))
+                Dim ans As Node = Parser.Parse(New LinkedList(Of String)(words))
                 Dim out As String = ""
-                For j = 0 To ans.Count - 1
-                    out &= ans(j).ToString()
-                    If ans(j).Ins = "BST" Then
-                        FindCoilMapping(ans(j), results)
-                        Exit For
-                        'MessageBox.Show(str & Environment.NewLine & results.Count)
+                Dim cur As Node = ans
+                While cur IsNot Nothing
+                    out &= cur.ToString()
+                    If cur.Ins = "BST" Then
+                        findcoilmapping(cur, results)
                     End If
-                Next
+                    cur = cur.NextIns
+                End While
+                'For j = 0 To ans.Count - 1
+                '    out &= ans(j).ToString()
+                '    If ans(j).Ins = "BST" Then
+                '        FindCoilMapping(ans(j), results)
+                '        Exit For
+                '        'MessageBox.Show(str & Environment.NewLine & results.Count)
+                '    End If
+                'Next
+                'MessageBox.Show(out)
                 Return results
                 'MessageBox.Show("Parser result:" + Environment.NewLine + out)
                 'MessageBox.Show(str)
@@ -78,36 +87,46 @@ Partial Class Form1
         Return results
     End Function
 
-    Private Sub FindCoilMapping(bst As Node, results As List(Of Tuple(Of String, String)))
+    Private Sub findcoilmapping(bst As Node, results As List(Of Tuple(Of String, String)))
         Dim count = 0
         For Each branch In bst.Children
-            If branch.Last.Ins = "OR" Then
-                If branch.First.Children.Count = 0 Then
-                    'MessageBox.Show("Source: " & child.First.Args(0) & " DES: " & child.Last.Args(0) & "/" & count)
-                    If dataEntries(branch.First.Args(0)).Item1 <> "ALWAYS_OFF" Then
-                        results.Add(New Tuple(Of String, String)(branch.First.Args(0), branch.Last.Args(0) & "/" & count))
+            Dim cur = branch
+            Dim rungSize = 1
+            While cur.NextIns IsNot Nothing
+                rungSize += 1
+                cur = cur.NextIns
+            End While
+            If cur.Ins = "OR" Then
+                'MessageBox.Show(branch.Ins)
+                If rungSize = 2 AndAlso branch.Ins <> "BST" Then
+                    If dataEntries(branch.Args(0)).Item1 <> "ALWAYS_OFF" Then
+                        results.Add(New Tuple(Of String, String)(branch.Args(0), cur.Args(0) & "/" & count))
                     End If
-                Else
-                    'MessageBox.Show("Source: " & child.First.Children(0)(0).Args(0) & " DES: " & child.Last.Args(0) & "/" & count)
-                    Dim str = ""
-                        For i As Integer = 0 To branch.Count - 2
-                            str &= branch(i).ToString
-                        Next
-                        results.Add(New Tuple(Of String, String)(branch.First.Children(0)(0).Args(0), branch.Last.Args(0) & "/" & count))
-                        'MessageBox.Show("This coil address is mapped to multiple blocks: " & branch.Last.Args(0) & "/" & count & Environment.NewLine & branch.First.ToString())
-                        MessageBox.Show(str)
-
-                    End If
+                ElseIf rungSize >= 2 Then
+                    Dim temp = branch
+                    Dim related = New List(Of Node)
+                    While temp IsNot cur
+                        related.Add(temp)
+                        temp = temp.NextIns
+                    End While
+                    Dim des = cur.Args(0) & "/" & count
+                    results.Add(New Tuple(Of String, String)(makeupmapping(related, des), des))
+                    'MessageBox.Show(des)
+                End If
                 count += 1
             End If
-
         Next
     End Sub
 
-    Private Function makeupmapping(str As String, des As String) As String
+    Private Function makeupmapping(related As List(Of Node), des As String) As String
         Dim addrs As List(Of String) = New List(Of String)
         Dim s = ""
-        MessageBox.Show(str)
-        Return s
+        Dim stored = des
+        If related.First.Ins = "BST" Then
+            dataEntries(des) = dataEntries(related.First.Children.First.Args(0))
+        Else
+            dataEntries(des) = dataEntries(related.First.Args(0))
+        End If
+        Return stored
     End Function
 End Class

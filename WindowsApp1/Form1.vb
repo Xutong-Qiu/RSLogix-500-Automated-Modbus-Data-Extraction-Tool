@@ -29,11 +29,6 @@ Public Class Form1
                 If logixObj IsNot Nothing Then
                     'change the second to true to save
                     logixObj.close(True, False)
-                    logixObj = Nothing
-                End If
-                If logixApp IsNot Nothing Then
-                    logixApp.Quit(True, False)
-                    logixApp = Nothing
                 End If
                 dataEntries.Clear()
                 modbusDic.Clear()

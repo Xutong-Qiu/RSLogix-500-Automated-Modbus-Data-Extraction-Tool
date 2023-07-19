@@ -1,15 +1,11 @@
 ﻿Imports System.Drawing.Imaging
 
 Module Parser
-    Public Function Parse(tokens As LinkedList(Of String)) As List(Of Node)
-        Dim ans As New List(Of Node)
+    Public Function Parse(tokens As LinkedList(Of String)) As Node
         If tokens.First.Value = "SOR" Then
             tokens.RemoveFirst()
         End If
-        While tokens.First.Value <> "EOR" AndAlso tokens.First.Value <> "BND" AndAlso tokens.First.Value <> "NXB"
-            ans.Add(ParseIns(tokens))
-        End While
-        Return ans
+        Return ParseIns(tokens)
     End Function
 
     Private Function ParseIns(Tokens As LinkedList(Of String)) As Node
@@ -44,6 +40,9 @@ Module Parser
             Case Else
                 MessageBox.Show("invalid instruction: " + token)
         End Select
+        If Tokens.First.Value <> "EOR" AndAlso Tokens.First.Value <> "NXB" AndAlso Tokens.First.Value <> "BND" Then
+            ans.NextIns = ParseIns(Tokens)
+        End If
         Return ans
     End Function
     Private Function ParseSWP(Tokens As LinkedList(Of String)) As Node
@@ -134,7 +133,7 @@ Module Parser
         Tokens.RemoveFirst()
         Dim ans As New Node("BST")
         While Tokens.First.Value <> "BND"
-            ans.Children.Add(Parse(Tokens))
+            ans.Children.Add(ParseIns(Tokens))
             If Tokens.Count = 0 Then
                 MessageBox.Show("empty token!" + ans.ToString)
             End If
@@ -150,12 +149,14 @@ End Module
 
 Public Class Node
     Public Property Ins As String
-    Public Property Children As List(Of List(Of Node))
+    Public Property Children As List(Of Node)
+    Public Property NextIns As Node
     Public Property Args As List(Of String)
     Public Sub New(Str As String)
         Ins = Str
-        Children = New List(Of List(Of Node))
+        Children = New List(Of Node)
         Args = New List(Of String)
+        NextIns = Nothing
     End Sub
     Public Overrides Function ToString() As String
         Dim s As String = ""
@@ -164,11 +165,9 @@ Public Class Node
             s &= "BST{" + Environment.NewLine
             For Each child In Children
                 Dim temp As String
-                For Each node In child
-                    temp = node.ToString()
-                    temp = temp.Replace(Environment.NewLine, Environment.NewLine & "    ")  'add indent
-                    s &= "  " + temp
-                Next
+                temp = child.ToString()
+                'temp = temp.Replace(Environment.NewLine, Environment.NewLine & "    ")  'add indent
+                s &= "  " + temp
                 s &= Environment.NewLine
             Next
             s &= "}"
@@ -178,30 +177,11 @@ Public Class Node
                 s &= arg & ", "
             Next
             s = s.Substring(0, s.Length - 2) & ")" & " "
+        End If
 
+        If NextIns IsNot Nothing Then
+            s &= NextIns.ToString
         End If
-        Return s
-        If Args.Count <> 0 Then
-            s &= "("
-            For Each arg In Args
-                s &= arg & ", "
-            Next
-            s = s.Substring(0, s.Length - 2) & ")"
-        End If
-        If Children.Count = 0 Then
-            Return s
-        End If
-        s &= "{"
-        For Each child In Children
-            Dim temp As String
-            For Each node In child
-                temp = node.ToString()
-                temp = temp.Replace(Environment.NewLine, Environment.NewLine & "    ")  'add indent
-                s &= temp
-            Next
-        Next
-        s &= Environment.NewLine
-        s &= "}"
         Return s
     End Function
 End Class
