@@ -1,8 +1,8 @@
 ﻿Imports System.IO
 
 Public Class Form1
-    Private dataEntries As New SortedDictionary(Of String, Tuple(Of String, String))(New CustomComparer())
-    Private modbusDic As New SortedDictionary(Of String, List(Of String))(New CustomComparer())
+    Private dataEntries As New Dictionary(Of String, Tuple(Of String, String))
+    Private modbusDic As New Dictionary(Of String, List(Of String))
     Private buttons As New List(Of Windows.Forms.Button)
     Private logixApp As Object = CreateObject("RSLogix500.Application")
     Private logixObj As Object
@@ -174,6 +174,7 @@ Public Class Form1
             content.Add({addr, dataEntries(addr).Item1, dataEntries(addr).Item2})
         Next
         'WriteToCSV(content, "C:\Users\37239\OneDrive - Entegris\Desktop\export.csv")
+        content.Sort(New DataEntryComparer())
         DisplayList(content, {"Address", "Name", "Description"})
     End Sub
 
@@ -213,6 +214,7 @@ Public Class Form1
                 content.Add({addr, str, dataEntries(addr).Item1, dataEntries(addr).Item2})
             End If
         Next
+        content.Sort(New DataEntryComparer())
         DisplayList(content, {"Source", "Destination", "Name", "Description"})
     End Sub
 End Class
