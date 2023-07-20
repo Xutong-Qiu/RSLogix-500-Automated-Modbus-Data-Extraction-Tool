@@ -8,7 +8,7 @@ Public Class Form1
     Private logixObj As Object
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        buttons = New List(Of Windows.Forms.Button) From {Search, find_invalid_mapping_button, display_data_button, perform_mapping}
+        buttons = New List(Of Windows.Forms.Button) From {Search, find_invalid_mapping_button, load_data_button, perform_mapping}
         For Each btn In buttons
             btn.Enabled = False
         Next
@@ -166,7 +166,7 @@ Public Class Form1
 
     End Sub
 
-    Private Sub show_data_button_click(sender As Object, e As EventArgs) Handles display_data_button.Click
+    Private Sub load_data_button_click(sender As Object, e As EventArgs) Handles load_data_button.Click
         Dim data_collection = logixObj.AddrSymRecords
         LoadData(data_collection)
         Dim content = New List(Of String())
@@ -180,13 +180,12 @@ Public Class Form1
 
     Private Sub perform_mapping_Click(sender As Object, e As EventArgs) Handles perform_mapping.Click
         Dim content = New List(Of String())
-        Dim record As Object = Nothing
         For Each addr In modbusDic.Keys
             If dataEntries.ContainsKey(addr) Then
                 Dim str As String = ""
                 For Each s In modbusDic(addr)
                     str = str + " " + s
-                    record = logixObj.AddrSymRecords.GetRecordViaAddrOrSym(s, 0)
+                    Dim record = logixObj.AddrSymRecords.GetRecordViaAddrOrSym(s, 0)
                     ' If record IsNot Nothing Then
                     'MessageBox.Show(s & " " & record.Scope)
                     'End If
@@ -197,23 +196,22 @@ Public Class Form1
                         record.SetScope(0)
                     End If
                     Dim symbol = dataEntries(addr).Item1
-                    If symbol <> "" AndAlso symbol.Length + 1 >= logixApp.MaxSymbolLength - 1 Then
+                    If symbol IsNot Nothing AndAlso symbol.Length + 1 >= logixApp.MaxSymbolLength - 1 Then
                         symbol = symbol.Substring(0, symbol.Length - 2) + "_"
                     Else
                         symbol += "_"
                     End If
-                    If record.Symbol = "" Or record.Symbol Is Nothing Then
-                        If record.SetSymbol(symbol) = False Then
-                            'MessageBox.Show("Unable to set name. Addr: " + s + " Source: " + addr + " " + symbol)
-                        End If
+                    'If addr = "I:4.4" Then
+                    'MessageBox.Show(record.SetSymbol(symbol + "_"))
+                    'End If
+                    If record.SetSymbol(symbol) = False Then
+                        'MessageBox.Show("Unable to set name. Addr: " + s + " Source: " + addr + " " + symbol)
                     End If
-                    If record.Description = "" Or record.Description Is Nothing Then
-                        If record.SetDescription(dataEntries(addr).Item2) = False Then
-                            'MessageBox.Show("Unable to set description. Addr: " + s + " Source: " + addr)
-                        End If
+                    If record.SetDescription(dataEntries(addr).Item2) = False Then
+                        'MessageBox.Show("Unable to set description. Addr: " + s + " Source: " + addr)
                     End If
                 Next
-                content.Add({addr, str, record.Symbol, record.Description})
+                content.Add({addr, str, dataEntries(addr).Item1, dataEntries(addr).Item2})
             End If
         Next
         content.Sort(New DataEntryComparer())

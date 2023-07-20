@@ -7,23 +7,19 @@ Partial Class Form1
         Dim Data As Object
         For i As Integer = 0 To numOfRec - 1
             Data = records.GetRecordViaIndex(i)
-            Dim desp = Data.Description
+            Dim str = Data.Description
             'If Data.Address = "N17:21" Then
             'MessageBox.Show(Data.Symbol)
             'End If
-            desp = desp.Replace(Environment.NewLine, " ")
+            str = str.Replace(Environment.NewLine, " ")
             If Data.Address IsNot Nothing Then
                 If dataEntries.ContainsKey(Data.Address) Then
-                    'If dataEntries(Data.Address).Item1 = "" Then
-                    '    'MessageBox.Show("repeat data: " + Data.Address + " New:" + Data.Symbol + " Old:" + dataEntries(Data.Address).Item1)
-                    '    dataEntries(Data.Address) = New Tuple(Of String, String)(Data.Symbol, dataEntries(Data.Address).Item2)
-                    'End If
-                    'If dataEntries(Data.Address).Item2 = "" Then
-                    '    'MessageBox.Show("repeat data: " + Data.Address + " New:" + Data.Symbol + " Old:" + dataEntries(Data.Address).Item1)
-                    '    dataEntries(Data.Address) = New Tuple(Of String, String)(dataEntries(Data.Address).Item1, desp)
-                    'End If
+                    If dataEntries(Data.Address).Item1 = "" Then
+                        'MessageBox.Show("repeat data: " + Data.Address + "New:" + Data.Symbol + "Old:" + dataEntries(Data.Address).Item1)
+                        dataEntries(Data.Address) = New Tuple(Of String, String)(Data.Symbol, str)
+                    End If
                 Else
-                    dataEntries.Add(Data.Address, New Tuple(Of String, String)(Data.Symbol, desp))
+                    dataEntries.Add(Data.Address, New Tuple(Of String, String)(Data.Symbol, str))
                 End If
             End If
         Next
