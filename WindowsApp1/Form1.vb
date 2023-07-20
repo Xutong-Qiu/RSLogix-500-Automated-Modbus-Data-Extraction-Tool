@@ -8,7 +8,7 @@ Public Class Form1
     Private logixObj As Object
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        buttons = New List(Of Windows.Forms.Button) From {Search, find_invalid_mapping_button, load_data_button, perform_mapping}
+        buttons = New List(Of Windows.Forms.Button) From {Search, find_invalid_mapping_button, display_data_button, perform_mapping}
         For Each btn In buttons
             btn.Enabled = False
         Next
@@ -166,7 +166,7 @@ Public Class Form1
 
     End Sub
 
-    Private Sub load_data_button_click(sender As Object, e As EventArgs) Handles load_data_button.Click
+    Private Sub load_data_button_click(sender As Object, e As EventArgs) Handles display_data_button.Click
         Dim data_collection = logixObj.AddrSymRecords
         LoadData(data_collection)
         Dim content = New List(Of String())

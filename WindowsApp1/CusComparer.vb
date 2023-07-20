@@ -12,8 +12,7 @@ Public Class AddrComparer
     Implements IComparer(Of String)
 
     Public Function Compare(x As String, y As String) As Integer Implements IComparer(Of String).Compare
-        Dim addr As String = "^([A-Z]){1,3}(\d{1,3}):(\d{1,3})(?:\/(\d{1,2}))*|(I|O):(\d{1,3}\.\d{1,3})$"
-
+        Dim addr As String = "^([A-Z]){1,3}(\d{1,3}):(\d{1,3})(?:\/(\d{1,2}))*|(I|O|S):(\d{1,3}\.\d{1,3})(.)$"
         Dim regex As New Regex(addr)
         Dim matchx As Match = regex.Match(x)
         Dim matchy As Match = regex.Match(y)
@@ -48,8 +47,10 @@ Public Class AddrComparer
             End If
             Return CSng(xaddr3).CompareTo(CSng(yaddr3))
         End If
-        Return xaddr3.CompareTo(yaddr3)
+        If matchx.Groups(8).Value.CompareTo(matchy.Groups(8).Value) = 0 Then
+            'MessageBox.Show(x & " " & y & " " & matchx.Groups(8).Value.CompareTo(matchy.Groups(8).Value))
+        End If
+        Return matchx.Groups(8).Value.CompareTo(matchy.Groups(8).Value)
     End Function
-
 End Class
 
