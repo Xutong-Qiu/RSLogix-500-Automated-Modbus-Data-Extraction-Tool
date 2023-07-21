@@ -2,7 +2,7 @@
 
 Partial Class Form1
 
-    Private Sub LoadData(records As Object)
+    Public Sub LoadData(records As Object)
         Dim numOfRec = records.Count
         Dim Data As Object
         For i As Integer = 0 To numOfRec - 1

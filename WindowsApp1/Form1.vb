@@ -8,34 +8,15 @@ Public Class Form1
     Private logixObj As Object
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        buttons = New List(Of Windows.Forms.Button) From {Search, find_invalid_mapping_button, display_data_button, perform_mapping}
+        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping}
         For Each btn In buttons
             btn.Enabled = False
         Next
+
     End Sub
 
     Private Sub load_file_Click(sender As Object, e As EventArgs) Handles load_file_button.Click
-
-        'For Each p As Process In Process.GetProcessesByName("Rs500")
-        '    'MessageBox.Show(p.ProcessName)
-        '    If p.ProcessName = "Rs500" Then
-        '        p.Kill()
-        '        p.WaitForExit()
-        '    End If
-        'Next
-        If dataEntries.Count <> 0 Then
-            Dim result As DialogResult = MessageBox.Show("Are you sure to load a new file?", "A File Has Been Loaded", MessageBoxButtons.YesNo)
-            If result = DialogResult.Yes Then
-                If logixObj IsNot Nothing Then
-                    'change the second to true to save
-                    logixObj.close(True, False)
-                End If
-                dataEntries.Clear()
-                modbusDic.Clear()
-            ElseIf result = DialogResult.No Then
-                Return
-            End If
-        End If
+        'checking if rslogix500 is opened successfully
         If logixApp Is Nothing Then 'Error checking, if gApplication is not set then display a message
             MessageBox.Show("ERROR: Failed to open RSLogix500 software.",
                             "ERROR: 001",
@@ -43,14 +24,48 @@ Public Class Form1
                             MessageBoxIcon.Exclamation)
             Return
         End If
-        Dim path = “C:\Users\37239\OneDrive - Entegris\Desktop\Project\SW2031_W.RSS”
+        'For Each p As Process In Process.GetProcessesByName("Rs500")
+        '    'MessageBox.Show(p.ProcessName)
+        '    If p.ProcessName = "Rs500" Then
+        '        p.Kill()
+        '        p.WaitForExit()
+        '    End If
+        'Next
+        'Checking if a file is already loaded
+        If dataEntries.Count <> 0 Then
+            Dim result As DialogResult = MessageBox.Show("Are you sure to load a new file?", "A File Has Been Loaded", MessageBoxButtons.YesNo)
+            If result = DialogResult.Yes Then
+                If logixObj IsNot Nothing Then
+                    'change the second to true to save
+                    logixObj.close(True, False)
+                End If
+            ElseIf result = DialogResult.No Then
+                Return
+            End If
+        End If
+        'loading new file
+        Dim openFileDialog As New OpenFileDialog
+        Dim path As String = ""
+        If openFileDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK Then
+            Path = openFileDialog.FileName
+            Dim extension = IO.Path.GetExtension(path)
+            If extension <> ".RSS" Then
+                MessageBox.Show("The file must be an RSS file.")
+                Return
+            End If
+        Else
+            Return
+        End If
+
+        'preparing database
+        dataEntries.Clear()
+        modbusDic.Clear()
+        'Dim path = “C:\Users\37239\OneDrive - Entegris\Desktop\Project\SW2031_W.RSS”
         If File.Exists(path) Then
             Try
                 Using fs As FileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.None)
-                    ' If the file can be opened, it is not in use
                 End Using
             Catch ex As IOException
-                ' If an IOException occurred, the file is in use
                 MessageBox.Show("File is being used by other applications.")
                 Return
             End Try
@@ -58,8 +73,8 @@ Public Class Form1
             Dim fs = File.Create(path)
             fs.Close()
         End If
-
-        logixObj = logixApp.FileOpen(“C:\Users\37239\OneDrive - Entegris\Desktop\Project\SW2031_W.RSS”, False, False, True)
+        'MAKE THE FIRST OPTION TO true to let the user select
+        logixObj = logixApp.FileOpen(path, False, False, True)
         If logixObj Is Nothing Then
             MessageBox.Show("ERROR: Failed to open the file.")
             Return
@@ -81,7 +96,7 @@ Public Class Form1
             logixObj.close(True, False)
             logixObj = Nothing
         End If
-        If logixApp IsNot Nothing Then
+        If logixApp IsNot Nothing AndAlso dataEntries.Count <> 0 Then
             logixApp.Quit(True, False)
             logixApp = Nothing
         End If
@@ -133,6 +148,8 @@ Public Class Form1
 
 
     Private Sub find_invalid_mapping_button_click(sender As Object, e As EventArgs) Handles find_invalid_mapping_button.Click
+        test()
+        Return
         Dim invalid = 0
         Dim content = New List(Of String())
         For Each addr In modbusDic.Keys
@@ -196,7 +213,7 @@ Public Class Form1
                         record.SetScope(0)
                     End If
                     Dim symbol = dataEntries(addr).Item1
-                    If symbol IsNot Nothing AndAlso symbol.Length + 1 >= logixApp.MaxSymbolLength - 1 Then
+                    If symbol <> "" AndAlso symbol.Length + 1 >= logixApp.MaxSymbolLength - 1 Then
                         symbol = symbol.Substring(0, symbol.Length - 2) + "_"
                     Else
                         symbol += "_"
@@ -204,11 +221,13 @@ Public Class Form1
                     'If addr = "I:4.4" Then
                     'MessageBox.Show(record.SetSymbol(symbol + "_"))
                     'End If
-                    If record.SetSymbol(symbol) = False Then
+                    If symbol <> "_" AndAlso record.SetSymbol(symbol) = True Then
                         'MessageBox.Show("Unable to set name. Addr: " + s + " Source: " + addr + " " + symbol)
                     End If
-                    If record.SetDescription(dataEntries(addr).Item2) = False Then
-                        'MessageBox.Show("Unable to set description. Addr: " + s + " Source: " + addr)
+                    If dataEntries(addr).Item2 <> "" Then
+                        If record.SetDescription(dataEntries(addr).Item2) = True Then
+                            'MessageBox.Show("Unable to set description. Addr: " + s + " Source: " + addr)
+                        End If
                     End If
                 Next
                 content.Add({addr, str, dataEntries(addr).Item1, dataEntries(addr).Item2})
