@@ -28,30 +28,32 @@ Partial Class Form1
     Private Sub LoadMapping(programs As Object)
         Dim numOfProg = programs.Count()
         Dim ladder As Object
-        For i As Integer = 0 To 0
-            ladder = programs.Item(49)
-            'If ladder IsNot Nothing Then
-            '    MessageBox.Show(i.ToString() + ladder.Name)
-            'End If
-            Dim numOfRung = ladder.NumberOfRungs
-            For j As Integer = 0 To numOfRung - 1
-                Dim r = ladder.GetRung(j)
-                'modbusDic
-                Dim mapping = ExtractMapping(ladder.GetRungAsAscii(j))
-                For Each pair In mapping
-                    'MessageBox.Show(pair.Item1 + pair.Item2)
-                    'If modbusDic.ContainsKey(pair.Item1) Then
-                    ' MessageBox.Show(pair.Item1 + modbusDic(pair.Item1)(0) + " " + pair.Item2)
-                    'End If
-                    If Not modbusDic.ContainsKey(pair.Item1) Then
-                        modbusDic.Add(pair.Item1, New List(Of String))
-                    End If
+        For i As Integer = 0 To numOfProg - 1
+            If programs.Item(i) IsNot Nothing AndAlso programs.Item(i).Name = "MODBUS" Then
+                ladder = programs.Item(i)
+                'If ladder IsNot Nothing Then
+                '    MessageBox.Show(i.ToString() + ladder.Name)
+                'End If
+                Dim numOfRung = ladder.NumberOfRungs
+                For j As Integer = 0 To numOfRung - 1
+                    Dim r = ladder.GetRung(j)
+                    'modbusDic
+                    Dim mapping = ExtractMapping(ladder.GetRungAsAscii(j))
+                    For Each pair In mapping
+                        'MessageBox.Show(pair.Item1 + pair.Item2)
+                        'If modbusDic.ContainsKey(pair.Item1) Then
+                        ' MessageBox.Show(pair.Item1 + modbusDic(pair.Item1)(0) + " " + pair.Item2)
+                        'End If
+                        If Not modbusDic.ContainsKey(pair.Item1) Then
+                            modbusDic.Add(pair.Item1, New List(Of String))
+                        End If
 
-                    modbusDic(pair.Item1).Add(pair.Item2)
+                        modbusDic(pair.Item1).Add(pair.Item2)
+                    Next
+                    'MessageBox.Show(ladder.GetRungAsAscii(j))
                 Next
-
-                'MessageBox.Show(ladder.GetRungAsAscii(j))
-            Next
+                Exit For
+            End If
         Next
 
     End Sub
