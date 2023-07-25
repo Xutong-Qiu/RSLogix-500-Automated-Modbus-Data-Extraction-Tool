@@ -144,7 +144,7 @@ Public Class Form1
     End Sub
 
 
-    Private invalid_mapping = New List(Of String)
+    Private invalid_mapping As Dictionary(Of String, String) = New Dictionary(Of String, String)
     Private Sub find_invalid_mapping_button_click(sender As Object, e As EventArgs) Handles find_invalid_mapping_button.Click
         Dim invalid = 0
         Dim content = New List(Of String())
@@ -154,14 +154,16 @@ Public Class Form1
                 If reverse_mapping.ContainsKey(des) Then
                     reverse_mapping(des).Add(addr)
                     If reverse_mapping(des).Count > 1 Then
-                        invalid_mapping.add(des)
+                        If Not invalid_mapping.ContainsKey(des) Then
+                            invalid_mapping.add(des, "")
+                        End If
                     End If
                 Else
                     reverse_mapping.Add(des, New List(Of String) From {addr})
                 End If
             Next
         Next
-        For Each addr In invalid_mapping
+        For Each addr In invalid_mapping.keys
             content.Add({addr})
         Next
         content.Sort(New DataEntryComparer)

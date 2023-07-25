@@ -138,7 +138,9 @@ Partial Class Form1
     End Sub
     'This function is reserved for future use
     Private Function makeupmapping(related As List(Of Node), des As String) As String
-        invalid_mapping.Add(des)
+        If Not invalid_mapping.ContainsKey(des) Then
+            invalid_mapping.add(des, "")
+        End If
         Dim addrs As List(Of String) = New List(Of String)
         Dim s = ""
         Dim stored = des
