@@ -6,7 +6,7 @@ Public Class Form1
     Private buttons As New List(Of Windows.Forms.Button)
     Private logixApp As Object = CreateObject("RSLogix500.Application")
     Private logixObj As Object
-
+    Private data_collection As Object
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping}
         For Each btn In buttons
@@ -80,7 +80,8 @@ Public Class Form1
             Return
         End If
         Dim programs = logixObj.ProgramFiles
-        LoadData(logixObj.AddrSymRecords)
+        data_collection = logixObj.AddrSymRecords
+        LoadData()
         LoadMapping(programs)
 
         For Each btn In buttons
@@ -184,8 +185,7 @@ Public Class Form1
     End Sub
 
     Private Sub load_data_button_click(sender As Object, e As EventArgs) Handles display_data_button.Click
-        Dim data_collection = logixObj.AddrSymRecords
-        LoadData(data_collection)
+        LoadData()
         Dim content = New List(Of String())
         For Each addr In dataEntries.Keys
             content.Add({addr, dataEntries(addr).Item1, dataEntries(addr).Item2})
@@ -198,22 +198,25 @@ Public Class Form1
     Private Sub perform_mapping_Click(sender As Object, e As EventArgs) Handles perform_mapping.Click
         Dim content = New List(Of String())
         For Each addr In modbusDic.Keys
-            If dataEntries.ContainsKey(addr) Then
+            If dataEntries.ContainsKey(addr) Then 'if database has source addr
                 Dim str As String = ""
-                For Each s In modbusDic(addr)
+                For Each s In modbusDic(addr) 'for each des addr
                     str = str + " " + s
                     Dim record = logixObj.AddrSymRecords.GetRecordViaAddrOrSym(s, 0)
                     ' If record IsNot Nothing Then
                     'MessageBox.Show(s & " " & record.Scope)
                     'End If
+                    Dim symbol = dataEntries(addr).Item1 'got the des addr name by looking up src addr name
+                    If symbol = "" Then
+                        Exit For
+                    End If
                     If record Is Nothing Then
                         record = logixObj.AddrSymRecords.add()
                         'MessageBox.Show("creating new addr: " + s)
                         record.SetAddress(s)
                         record.SetScope(0)
-                    End If
-                    Dim symbol = dataEntries(addr).Item1
-                    If symbol <> "" AndAlso symbol.Length + 1 >= logixApp.MaxSymbolLength - 1 Then
+                    End If 'got the des addr instance
+                    If symbol.Length + 1 >= logixApp.MaxSymbolLength - 1 Then
                         symbol = symbol.Substring(0, symbol.Length - 2) + "_"
                     Else
                         symbol += "_"
@@ -221,7 +224,7 @@ Public Class Form1
                     'If addr = "I:4.4" Then
                     'MessageBox.Show(record.SetSymbol(symbol + "_"))
                     'End If
-                    If symbol <> "_" AndAlso record.SetSymbol(symbol) = True Then
+                    If symbol <> "_" And record.SetSymbol(symbol) = True Then
                         'MessageBox.Show("Unable to set name. Addr: " + s + " Source: " + addr + " " + symbol)
                     End If
                     If dataEntries(addr).Item2 <> "" Then

@@ -2,24 +2,21 @@
 
 Partial Class Form1
 
-    Public Sub LoadData(records As Object)
-        Dim numOfRec = records.Count
-        Dim Data As Object
+    Public Sub LoadData()
+        Dim numOfRec = data_collection.Count
+        Dim record As Object
         For i As Integer = 0 To numOfRec - 1
-            Data = records.GetRecordViaIndex(i)
-            Dim str = Data.Description
-            'If Data.Address = "N17:21" Then
-            'MessageBox.Show(Data.Symbol)
+            record = data_collection.GetRecordViaIndex(i)
+            Dim str = record.Description
+            'If record.Address = "T23:2" Then
+            '    MessageBox.Show(record.Symbol)
             'End If
             str = str.Replace(Environment.NewLine, " ")
-            If Data.Address IsNot Nothing Then
-                If dataEntries.ContainsKey(Data.Address) Then
-                    If dataEntries(Data.Address).Item1 = "" Then
-                        'MessageBox.Show("repeat data: " + Data.Address + "New:" + Data.Symbol + "Old:" + dataEntries(Data.Address).Item1)
-                        dataEntries(Data.Address) = New Tuple(Of String, String)(Data.Symbol, str)
-                    End If
+            If record.Address IsNot Nothing Then
+                If dataEntries.ContainsKey(record.Address) Then
+                    dataEntries(record.Address) = New Tuple(Of String, String)(record.Symbol, str)
                 Else
-                    dataEntries.Add(Data.Address, New Tuple(Of String, String)(Data.Symbol, str))
+                    dataEntries.Add(record.Address, New Tuple(Of String, String)(record.Symbol, str))
                 End If
             End If
         Next

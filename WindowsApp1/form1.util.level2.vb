@@ -1,4 +1,5 @@
-﻿Imports System.Text.RegularExpressions
+﻿Imports System.Drawing.Drawing2D
+Imports System.Text.RegularExpressions
 Partial Class Form1
 
     Function ExtractAddresses(rung As String) As List(Of Tuple(Of String, String))
@@ -31,9 +32,6 @@ Partial Class Form1
                     coil_start = True
                 End If
             End If
-            'If words(i) = "T23:2/EN" Then
-            '    MessageBox.Show(str)
-            'End If
             If coil_start AndAlso words(i) = "OR" Then
                 ' MessageBox.Show(str)
                 Dim ans As Node = Parser.Parse(New LinkedList(Of String)(words))
@@ -99,8 +97,15 @@ Partial Class Form1
             If cur.Ins = "OR" Then
                 'MessageBox.Show(branch.Ins)
                 If rungSize = 2 AndAlso branch.Ins <> "BST" Then
-                    If dataEntries.ContainsKey(branch.Args(0)) AndAlso dataEntries(branch.Args(0)).Item1 <> "ALWAYS_OFF" Then
-                        results.Add(New Tuple(Of String, String)(branch.Args(0), cur.Args(0) & "/" & count))
+                    Dim addr As String = "([A-Z]{1,3}\d{1,3}:\d{1,3}(?:\/\d{1,2})*|(?:I|O):\d{1,3}\.\d{1,3})"
+                    Dim regex As New Regex(addr)
+                    Dim match As Match = regex.Match(branch.Args(0))
+                    If match.Success = True Then
+                        addr = match.Groups(0).ToString
+                    End If
+                    'MessageBox.Show(addr)
+                    If dataEntries.ContainsKey(addr) AndAlso dataEntries(addr).Item1 <> "ALWAYS_OFF" Then
+                        results.Add(New Tuple(Of String, String)(addr, cur.Args(0) & "/" & count))
                     End If
                 ElseIf rungSize >= 2 Then
                     Dim temp = branch
