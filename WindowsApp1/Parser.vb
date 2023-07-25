@@ -35,12 +35,25 @@
                 ans = ParseJSR(Tokens)
             Case "SWP"
                 ans = ParseSWP(Tokens)
+            Case "CPW"
+                ans = ParseCPW(Tokens)
             Case Else
                 MessageBox.Show("invalid instruction: " + token)
         End Select
         If Tokens.First.Value <> "EOR" AndAlso Tokens.First.Value <> "NXB" AndAlso Tokens.First.Value <> "BND" Then
             ans.NextIns = ParseIns(Tokens)
         End If
+        Return ans
+    End Function
+    Private Function ParseCPW(Tokens As LinkedList(Of String)) As Node
+        Dim ans As New Node("CPW")
+        Tokens.RemoveFirst()
+        ans.Args.Add(Tokens.First.Value)
+        Tokens.RemoveFirst()
+        ans.Args.Add(Tokens.First.Value)
+        Tokens.RemoveFirst()
+        ans.Args.Add(Tokens.First.Value)
+        Tokens.RemoveFirst()
         Return ans
     End Function
     Private Function ParseSWP(Tokens As LinkedList(Of String)) As Node
@@ -50,6 +63,7 @@
         Tokens.RemoveFirst()
         Return ans
     End Function
+
     Private Function ParseOR(Tokens As LinkedList(Of String)) As Node
         Dim ans As New Node("OR")
         Tokens.RemoveFirst()

@@ -1,14 +1,16 @@
 ﻿Imports System.IO
 
 Public Class Form1
+
     Private dataEntries As New Dictionary(Of String, Tuple(Of String, String))
     Private modbusDic As New Dictionary(Of String, List(Of String))
     Private buttons As New List(Of Windows.Forms.Button)
     Private logixApp As Object = CreateObject("RSLogix500.Application")
     Private logixObj As Object
     Private data_collection As Object
+
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping}
+        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button}
         For Each btn In buttons
             btn.Enabled = False
         Next
@@ -17,20 +19,13 @@ Public Class Form1
 
     Private Sub load_file_Click(sender As Object, e As EventArgs) Handles load_file_button.Click
         'checking if rslogix500 is opened successfully
-        If logixApp Is Nothing Then 'Error checking, if gApplication is not set then display a message
+        If logixApp Is Nothing Then
             MessageBox.Show("ERROR: Failed to open RSLogix500 software.",
                             "ERROR: 001",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Exclamation)
             Return
         End If
-        'For Each p As Process In Process.GetProcessesByName("Rs500")
-        '    'MessageBox.Show(p.ProcessName)
-        '    If p.ProcessName = "Rs500" Then
-        '        p.Kill()
-        '        p.WaitForExit()
-        '    End If
-        'Next
         'Checking if a file is already loaded
         If dataEntries.Count <> 0 Then
             Dim result As DialogResult = MessageBox.Show("Are you sure to load a new file?", "A File Has Been Loaded", MessageBoxButtons.YesNo)
@@ -47,7 +42,7 @@ Public Class Form1
         Dim openFileDialog As New OpenFileDialog
         Dim path As String = ""
         If openFileDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK Then
-            Path = openFileDialog.FileName
+            path = openFileDialog.FileName
             Dim extension = IO.Path.GetExtension(path)
             If extension <> ".RSS" Then
                 MessageBox.Show("The file must be an RSS file.")
@@ -57,10 +52,7 @@ Public Class Form1
             Return
         End If
 
-        'preparing database
-        dataEntries.Clear()
-        modbusDic.Clear()
-        'Dim path = “C:\Users\37239\OneDrive - Entegris\Desktop\Project\SW2031_W.RSS”
+        'check if file is in use
         If File.Exists(path) Then
             Try
                 Using fs As FileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.None)
@@ -73,17 +65,21 @@ Public Class Form1
             Dim fs = File.Create(path)
             fs.Close()
         End If
-        'MAKE THE FIRST OPTION TO true to let the user select
         logixObj = logixApp.FileOpen(path, False, False, True)
         If logixObj Is Nothing Then
             MessageBox.Show("ERROR: Failed to open the file.")
             Return
         End If
+
+        'preparing database
+        dataEntries.Clear()
+        modbusDic.Clear()
         Dim programs = logixObj.ProgramFiles
         data_collection = logixObj.AddrSymRecords
         LoadData()
         LoadMapping(programs)
 
+        'enable all buttons
         For Each btn In buttons
             btn.Enabled = True
         Next
@@ -148,23 +144,29 @@ Public Class Form1
     End Sub
 
 
+    Private invalid_mapping = New List(Of String)
     Private Sub find_invalid_mapping_button_click(sender As Object, e As EventArgs) Handles find_invalid_mapping_button.Click
-        test()
-        Return
         Dim invalid = 0
         Dim content = New List(Of String())
+        Dim reverse_mapping As New Dictionary(Of String, List(Of String))
         For Each addr In modbusDic.Keys
-            If dataEntries.ContainsKey(addr) AndAlso dataEntries(addr).Item2 = "" Then
-                invalid += 1
-                content.Add({addr, modbusDic(addr)(0)})
-            End If
+            For Each des In modbusDic(addr)
+                If reverse_mapping.ContainsKey(des) Then
+                    reverse_mapping(des).Add(addr)
+                    If reverse_mapping(des).Count > 1 Then
+                        invalid_mapping.add(des)
+                    End If
+                Else
+                    reverse_mapping.Add(des, New List(Of String) From {addr})
+                End If
+            Next
         Next
+        For Each addr In invalid_mapping
+            content.Add({addr})
+        Next
+        content.Sort(New DataEntryComparer)
         WriteToCSV(content, "C:\Users\37239\OneDrive - Entegris\Desktop\export.csv")
-        DisplayList(content, {"Source", "Destination"})
-        MessageBox.Show("The number of invalid mapping is: " + invalid.ToString())
-    End Sub
-    Private Sub Label1_Click(sender As Object, e As EventArgs) Handles Label1.Click
-
+        DisplayList(content, {"Address"})
     End Sub
 
     ' Handle the KeyDown event for your textbox
@@ -176,21 +178,13 @@ Public Class Form1
         End If
     End Sub
 
-    Private Sub Label5_Click(sender As Object, e As EventArgs) Handles Label5.Click
-
-    End Sub
-
-    Private Sub Label2_Click(sender As Object, e As EventArgs) Handles Label2.Click
-
-    End Sub
-
-    Private Sub load_data_button_click(sender As Object, e As EventArgs) Handles display_data_button.Click
+    Private Sub display_data_button_click(sender As Object, e As EventArgs) Handles display_data_button.Click
+        'Update database if any change is made
         LoadData()
         Dim content = New List(Of String())
         For Each addr In dataEntries.Keys
             content.Add({addr, dataEntries(addr).Item1, dataEntries(addr).Item2})
         Next
-        'WriteToCSV(content, "C:\Users\37239\OneDrive - Entegris\Desktop\export.csv")
         content.Sort(New DataEntryComparer())
         DisplayList(content, {"Address", "Name", "Description"})
     End Sub

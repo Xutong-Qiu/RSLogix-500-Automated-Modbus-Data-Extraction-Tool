@@ -3,10 +3,6 @@ Imports System.Net
 Imports System.Text
 
 Public Module EventHandler
-    Private dataEntries As New Dictionary(Of String, Tuple(Of String, String))
-    Private modbusDic As New Dictionary(Of String, List(Of String))
-    Private logixApp As Object = CreateObject("RSLogix500.Application")
-    Private logixObj As Object
     Public Sub test()
         ' Create a request using a URL that can receive a post.
         Dim request As WebRequest = WebRequest.Create("https://api.openai.com/v1/engines/davinci-codex/completions")
@@ -64,4 +60,16 @@ Public Module EventHandler
 
     End Sub
 
+
+
+    'For Each p As Process In Process.GetProcessesByName("Rs500")
+    '    'MessageBox.Show(p.ProcessName)
+    '    If p.ProcessName = "Rs500" Then
+    '        p.Kill()
+    '        p.WaitForExit()
+    '    End If
+    'Next
+
+
+    'Dim path = “C:\Users\37239\OneDrive - Entegris\Desktop\Project\SW2031_W.RSS”
 End Module

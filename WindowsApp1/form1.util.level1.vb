@@ -32,7 +32,7 @@ Partial Class Form1
                 '    MessageBox.Show(i.ToString() + ladder.Name)
                 'End If
                 Dim numOfRung = ladder.NumberOfRungs
-                For j As Integer = 0 To numOfRung - 1
+                For j As Integer = 0 To numOfRung - 1 'iterate through rungs
                     Dim r = ladder.GetRung(j)
                     'modbusDic
                     Dim mapping = ExtractMapping(ladder.GetRungAsAscii(j))
