@@ -75,9 +75,7 @@
   <ItemGroup>
     <Compile Include="CusComparer.vb" />
     <Compile Include="EventHandler.vb" />
-    <Compile Include="form1.util.level2.vb">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="form1.util.level2.vb" />
     <Compile Include="Form1.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -88,6 +86,8 @@
     <Compile Include="form1.util.level1.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Interpreter.vb" />
+    <Compile Include="IOHandler.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -104,6 +104,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Parser.vb" />
+    <Compile Include="PLC_DB.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Form1.resx">

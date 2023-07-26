@@ -8,7 +8,7 @@ Public Class Form1
     Private logixApp As Object = CreateObject("RSLogix500.Application")
     Private logixObj As Object
     Private data_collection As Object
-
+    Private db As PLC_DB
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button}
         For Each btn In buttons
@@ -27,7 +27,7 @@ Public Class Form1
             Return
         End If
         'Checking if a file is already loaded
-        If dataEntries.Count <> 0 Then
+        If db IsNot Nothing Then
             Dim result As DialogResult = MessageBox.Show("Are you sure to load a new file?", "A File Has Been Loaded", MessageBoxButtons.YesNo)
             If result = DialogResult.Yes Then
                 If logixObj IsNot Nothing Then
@@ -38,46 +38,13 @@ Public Class Form1
                 Return
             End If
         End If
-        'loading new file
-        Dim openFileDialog As New OpenFileDialog
-        Dim path As String = ""
-        If openFileDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK Then
-            path = openFileDialog.FileName
-            Dim extension = IO.Path.GetExtension(path)
-            If extension <> ".RSS" Then
-                MessageBox.Show("The file must be an RSS file.")
-                Return
-            End If
-        Else
-            Return
-        End If
 
-        'check if file is in use
-        If File.Exists(path) Then
-            Try
-                Using fs As FileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.None)
-                End Using
-            Catch ex As IOException
-                MessageBox.Show("File is being used by other applications.")
-                Return
-            End Try
-        Else
-            Dim fs = File.Create(path)
-            fs.Close()
-        End If
-        logixObj = logixApp.FileOpen(path, False, False, True)
+        logixObj = LoadRSSFile(logixApp)
         If logixObj Is Nothing Then
-            MessageBox.Show("ERROR: Failed to open the file.")
             Return
         End If
-
-        'preparing database
-        dataEntries.Clear()
-        modbusDic.Clear()
-        Dim programs = logixObj.ProgramFiles
-        data_collection = logixObj.AddrSymRecords
-        LoadData()
-        LoadMapping(programs)
+        'preparing a new database
+        db = New PLC_DB(logixObj)
 
         'enable all buttons
         For Each btn In buttons
@@ -93,7 +60,7 @@ Public Class Form1
             logixObj.close(True, False)
             logixObj = Nothing
         End If
-        If logixApp IsNot Nothing AndAlso dataEntries.Count <> 0 Then
+        If logixApp IsNot Nothing Then
             logixApp.Quit(True, False)
             logixApp = Nothing
         End If
@@ -181,58 +148,33 @@ Public Class Form1
     End Sub
 
     Private Sub display_data_button_click(sender As Object, e As EventArgs) Handles display_data_button.Click
-        'Update database if any change is made
-        LoadData()
-        Dim content = New List(Of String())
-        For Each addr In dataEntries.Keys
-            content.Add({addr, dataEntries(addr).Item1, dataEntries(addr).Item2})
-        Next
-        content.Sort(New DataEntryComparer())
-        DisplayList(content, {"Address", "Name", "Description"})
+        DisplayList(db.DBtoList(), {"Address", "Name", "Description"})
+        Return
     End Sub
 
     Private Sub perform_mapping_Click(sender As Object, e As EventArgs) Handles perform_mapping.Click
-        Dim content = New List(Of String())
-        For Each addr In modbusDic.Keys
-            If dataEntries.ContainsKey(addr) Then 'if database has source addr
-                Dim str As String = ""
-                For Each s In modbusDic(addr) 'for each des addr
-                    str = str + " " + s
-                    Dim record = logixObj.AddrSymRecords.GetRecordViaAddrOrSym(s, 0)
-                    ' If record IsNot Nothing Then
-                    'MessageBox.Show(s & " " & record.Scope)
-                    'End If
-                    Dim symbol = dataEntries(addr).Item1 'got the des addr name by looking up src addr name
-                    If symbol = "" Then
-                        Exit For
-                    End If
-                    If record Is Nothing Then
-                        record = logixObj.AddrSymRecords.add()
-                        'MessageBox.Show("creating new addr: " + s)
-                        record.SetAddress(s)
-                        record.SetScope(0)
-                    End If 'got the des addr instance
-                    If symbol.Length + 1 >= logixApp.MaxSymbolLength - 1 Then
-                        symbol = symbol.Substring(0, symbol.Length - 2) + "_"
-                    Else
-                        symbol += "_"
-                    End If
-                    'If addr = "I:4.4" Then
-                    'MessageBox.Show(record.SetSymbol(symbol + "_"))
-                    'End If
-                    If symbol <> "_" And record.SetSymbol(symbol) = True Then
-                        'MessageBox.Show("Unable to set name. Addr: " + s + " Source: " + addr + " " + symbol)
-                    End If
-                    If dataEntries(addr).Item2 <> "" Then
-                        If record.SetDescription(dataEntries(addr).Item2) = True Then
-                            'MessageBox.Show("Unable to set description. Addr: " + s + " Source: " + addr)
-                        End If
-                    End If
-                Next
-                content.Add({addr, str, dataEntries(addr).Item1, dataEntries(addr).Item2})
-            End If
+        DisplayList(WriteToProject(logixObj, db), {"Address", "Name", "Description"})
+    End Sub
+
+
+    Private Sub DisplayList(list As List(Of String()), cols As String())
+        ' Create a new DataTable.
+        Dim table As New DataTable()
+
+        ' Assuming the string arrays all have the same length.
+        For Each colName As String In cols
+            table.Columns.Add(colName)
         Next
-        content.Sort(New DataEntryComparer())
-        DisplayList(content, {"Source", "Destination", "Name", "Description"})
+
+        ' Populate the DataTable from the List
+        For Each item() As String In list
+            table.Rows.Add(item)
+        Next
+
+        ' Bind the DataTable to the DataGridView
+        DataGridView1.DataSource = Nothing
+        DataGridView1.DataSource = table
+        DataGridView1.RowHeadersVisible = False
+        DataGridView1.AutoResizeColumns()
     End Sub
 End Class
