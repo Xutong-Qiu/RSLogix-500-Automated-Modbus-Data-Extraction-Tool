@@ -2,15 +2,13 @@
 
 Public Class Form1
 
-    Private dataEntries As New Dictionary(Of String, Tuple(Of String, String))
-    Private modbusDic As New Dictionary(Of String, List(Of String))
     Private buttons As New List(Of Windows.Forms.Button)
     Private logixApp As Object = CreateObject("RSLogix500.Application")
     Private logixObj As Object
     Private data_collection As Object
     Private db As PLC_DB
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button}
+        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button, Preview_Change_Button}
         For Each btn In buttons
             btn.Enabled = False
         Next
@@ -92,15 +90,15 @@ Public Class Form1
             End If
         End If
 
-        If dataEntries.ContainsKey(addr) Then
+        If db.ContainEntry(addr) Then
             'MessageBox.Show("Name: " + dataEntries(addr).Item1 + vbNewLine + "Description: " + dataEntries(addr).Item2)
-            Label2.Text = dataEntries(addr).Item1
+            Label2.Text = db.GetTagName(addr)
         Else
             MessageBox.Show("Address not found.")
         End If
-        If modbusDic.ContainsKey(addr) Then
+        If db.ContainEntry(addr) Then
             Dim s As String = ""
-            Dim l As List(Of String) = modbusDic(addr)
+            Dim l As List(Of String) = db.GetMappingTarget(addr)
             For Each i In l
                 s = s + i + " "
             Next
@@ -154,6 +152,19 @@ Public Class Form1
 
     Private Sub perform_mapping_Click(sender As Object, e As EventArgs) Handles perform_mapping.Click
         DisplayList(WriteToProject(logixObj, db), {"Address", "Name", "Description"})
+        MessageBox.Show("Successfully applied mappings to the project.")
+    End Sub
+
+
+    Private Sub Preview_Change_Button_Click(sender As Object, e As EventArgs) Handles Preview_Change_Button.Click
+        Dim modifiedList = db.GetModifiedEntries()
+        Dim content = New List(Of String())
+        For Each addr In modifiedList
+            content.Add({addr, db.GetTagName(addr), db.GetDescription(addr)})
+        Next
+        db.ChangeModifiedStatus(modifiedList)
+        content.Sort(New DataEntryComparer())
+        DisplayList(content, {"Address", "Name", "Description"})
     End Sub
 
 

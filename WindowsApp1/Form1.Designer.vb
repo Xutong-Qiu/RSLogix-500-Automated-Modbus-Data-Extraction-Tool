@@ -47,6 +47,7 @@ Partial Class Form1
         Me.display_data_button = New System.Windows.Forms.Button()
         Me.DataGridView1 = New System.Windows.Forms.DataGridView()
         Me.perform_mapping = New System.Windows.Forms.Button()
+        Me.Preview_Change_Button = New System.Windows.Forms.Button()
         Me.GroupBox1.SuspendLayout()
         CType(Me.DataGridView1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
@@ -155,18 +156,28 @@ Partial Class Form1
         '
         'perform_mapping
         '
-        Me.perform_mapping.Location = New System.Drawing.Point(12, 136)
+        Me.perform_mapping.Location = New System.Drawing.Point(12, 164)
         Me.perform_mapping.Name = "perform_mapping"
         Me.perform_mapping.Size = New System.Drawing.Size(157, 23)
         Me.perform_mapping.TabIndex = 14
-        Me.perform_mapping.Text = "Perform Mapping"
+        Me.perform_mapping.Text = "Apply Change"
         Me.perform_mapping.UseVisualStyleBackColor = True
+        '
+        'Preview_Change_Button
+        '
+        Me.Preview_Change_Button.Location = New System.Drawing.Point(12, 135)
+        Me.Preview_Change_Button.Name = "Preview_Change_Button"
+        Me.Preview_Change_Button.Size = New System.Drawing.Size(156, 23)
+        Me.Preview_Change_Button.TabIndex = 15
+        Me.Preview_Change_Button.Text = "Preview Change"
+        Me.Preview_Change_Button.UseVisualStyleBackColor = True
         '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(869, 450)
+        Me.Controls.Add(Me.Preview_Change_Button)
         Me.Controls.Add(Me.perform_mapping)
         Me.Controls.Add(Me.DataGridView1)
         Me.Controls.Add(Me.display_data_button)
@@ -182,4 +193,5 @@ Partial Class Form1
 
     End Sub
 
+    Friend WithEvents Preview_Change_Button As Button
 End Class

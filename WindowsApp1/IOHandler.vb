@@ -40,6 +40,7 @@ Public Module IOHandler
             record.SetDescription(db.GetDescription(addr))
             content.Add({addr, db.GetTagName(addr), db.GetDescription(addr)})
         Next
+        db.ChangeModifiedStatus(modifiedList)
         content.Sort(New DataEntryComparer())
         Return content
     End Function

@@ -98,6 +98,11 @@ Public Class PLC_DB
         addrDic.Add(addr, New DataEntry(addr, name, desp))
     End Sub
 
+    Public Sub ChangeModifiedStatus(l As List(Of String))
+        For Each addr In l
+            addrDic(addr).modified = False
+        Next
+    End Sub
     Public Sub Add(addr As String)
         If addrDic.ContainsKey(addr) Then
             Throw New ArgumentException("This data entry has presented in the database: " & addr)
