@@ -30,7 +30,7 @@ Public Class Form1
             If result = DialogResult.Yes Then
                 If logixObj IsNot Nothing Then
                     'change the second to true to save
-                    logixObj.close(True, False)
+                    logixObj.Close(False, False)
                 End If
             ElseIf result = DialogResult.No Then
                 Return
@@ -55,7 +55,7 @@ Public Class Form1
     Private Sub Form1_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
         If logixObj IsNot Nothing Then
             'change the second to true to save
-            logixObj.close(True, False)
+            logixObj.close(False, True)
             logixObj = Nothing
         End If
         If logixApp IsNot Nothing Then

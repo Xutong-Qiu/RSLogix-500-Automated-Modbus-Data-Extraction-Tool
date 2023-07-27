@@ -1,4 +1,10 @@
 ﻿Module Parser
+
+    ''' <summary>
+    ''' This function parses the logic of the given token list
+    ''' </summary>
+    ''' <param name="tokens">The token list as a linked list of string</param>
+    ''' <returns>A node that represents the logic.</returns>
     Public Function Parse(tokens As LinkedList(Of String)) As Node
         If tokens.First.Value = "SOR" Then
             tokens.RemoveFirst()

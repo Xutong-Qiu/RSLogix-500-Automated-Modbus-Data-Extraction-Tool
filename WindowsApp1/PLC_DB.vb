@@ -1,10 +1,18 @@
-﻿Imports System.Net
-Imports System.Runtime.Remoting.Messaging
-Imports System.Text.RegularExpressions
-
+﻿Imports System.Text.RegularExpressions
+''' <summary>
+''' PLC Database
+''' An instance of this class stores all data of a RSS file. One database is binded to one file. To load a new file,
+''' a new instance needs to be created.
+''' </summary>
 Public Class PLC_DB
     Private addrDic As Dictionary(Of String, DataEntry)
     Private tag_ref_list As Dictionary(Of String, String)
+    Private programs As Object
+
+    ''' <summary>
+    ''' The constructor of the PLC database
+    ''' </summary>
+    ''' <param name="proj">a logixProject object</param>
     Public Sub New(proj As Object)
         If proj Is Nothing Then
             Throw New ArgumentException("The project instance is NULL.")
@@ -12,11 +20,21 @@ Public Class PLC_DB
         addrDic = New Dictionary(Of String, DataEntry)
         Dim data_collection As Object = proj.AddrSymRecords
         LoadDataEntry(data_collection)
+        programs = proj.ProgramFiles
     End Sub
-
+    ''' <summary>
+    ''' This function checks whether the current database is empty
+    ''' </summary>
+    ''' <returns>A boolean that tells whether the current database is empty.</returns>
     Public Function Empty() As Boolean
         Return addrDic.Count = 0
     End Function
+    ''' <summary>
+    ''' This function converts the current database into a list of string arrays that can be easily
+    ''' displayed on a data grid.
+    ''' </summary>
+    ''' <returns>A list of string array. Each array represents a data entry and has three
+    ''' elements: the entry's address, tag name, and description. Index is in order.</returns>
     Public Function DBtoList() As List(Of String())
         Dim content As New List(Of String())
         For Each addr In addrDic.Keys
@@ -25,6 +43,7 @@ Public Class PLC_DB
         content.Sort(New DataEntryComparer())
         Return content
     End Function
+
     Private Sub LoadDataEntry(data_collection As Object)
         Dim numOfRec = data_collection.Count
         Dim record As Object
@@ -32,13 +51,15 @@ Public Class PLC_DB
             record = data_collection.GetRecordViaIndex(i)
             Dim desp = record.Description
             desp = desp.Replace(Environment.NewLine, " ")
-            If record.Address IsNot Nothing Then
+            If record.Address IsNot Nothing And record.Address <> "" Then
                 Add(record.Address, record.Symbol, desp)
             End If
         Next
     End Sub
-
-    Public Sub LoadMapping(programs As Object)
+    ''' <summary>
+    ''' This function loads all the modbus mapping information into the current database.
+    ''' </summary>
+    Public Sub LoadMapping()
         Dim numOfProg = programs.Count()
         Dim modbus_file As Object
         For i As Integer = 0 To numOfProg - 1
@@ -63,37 +84,69 @@ Public Class PLC_DB
             End If
         Next
     End Sub
-
+    ''' <summary>
+    ''' This function checks whether a entry with the given address is present in the data base.
+    ''' This function must be called before any attempt to access an entry in this database to 
+    ''' avoid a possible exception.
+    ''' </summary>
+    ''' <param name="addr">The address of the entry</param>
+    ''' <returns>A boolean that indicates whether the entry is present or not.</returns>
     Public Function ContainEntry(addr As String) As Boolean
         Return addrDic.ContainsKey(addr)
     End Function
-
+    ''' <summary>
+    ''' This function returns the tag name with the given address.
+    ''' </summary>
+    ''' <param name="addr">The address of the entry</param>
+    ''' <returns>A string that is the tag name with the given address.</returns>
     Public Function GetTagName(addr As String) As String
         If Not addrDic.ContainsKey(addr) Then
             Throw New KeyNotFoundException("The data entry is not presented in the database: " & addr)
         End If
         Return addrDic(addr).TagName
     End Function
+    ''' <summary>
+    ''' This function returns the description with the given address.
+    ''' </summary>
+    ''' <param name="addr">The address of the entry</param>
+    ''' <returns>A string that is the description with the given address.</returns>
     Public Function GetDescription(addr As String) As String
         If Not addrDic.ContainsKey(addr) Then
             Throw New KeyNotFoundException("The data entry is not presented in the database: " & addr)
         End If
         Return addrDic(addr).Description
     End Function
+    ''' <summary>
+    ''' This function returns the mapping target of the data entry with the given address. 
+    ''' i.e. the addresses that this data entry maps to. 
+    ''' </summary>
+    ''' <param name="addr">The address of the entry</param>
+    ''' <returns>A list of string that is the addresses of the mapping targets.</returns>
     Public Function GetMappingTarget(addr As String) As List(Of String)
         If Not addrDic.ContainsKey(addr) Then
             Throw New KeyNotFoundException("The data entry is not presented in the database: " & addr)
         End If
         Return addrDic(addr).MappingTo
     End Function
-
+    ''' <summary>
+    ''' This function returns the mapping source of the data entry with the given address. 
+    ''' i.e. the addresses that this data entry is mapped to. 
+    ''' </summary>
+    ''' <param name="addr">The address of the entry</param>
+    ''' <returns>A list of string that is the addresses of the mapping sources.</returns>
     Public Function GetMappingSrc(addr As String) As List(Of String)
         If Not addrDic.ContainsKey(addr) Then
             Throw New KeyNotFoundException("The data entry is not presented in the database: " & addr)
         End If
         Return addrDic(addr).MappedTo
     End Function
-
+    ''' <summary>
+    ''' This function adds a new entry to the database. It has a overload version that
+    ''' only takes in the address.
+    ''' </summary>
+    ''' <param name="addr">The address of the entry</param>
+    ''' <param name="name">The tag nane of the entry</param>
+    ''' <param name="desp">The description of the entry</param>
     Public Sub Add(addr As String, name As String, desp As String)
         If addrDic.ContainsKey(addr) Then
             Throw New ArgumentException("This data entry has presented in the database: " & addr)
@@ -106,20 +159,31 @@ Public Class PLC_DB
             addrDic(addr).isModified = False
         Next
     End Sub
+    ''' <summary>
+    ''' This function adds a new entry to the database. It has a overload version that
+    ''' takes in the address, tag name, and the description.
+    ''' </summary>
+    ''' <param name="addr">The address of the entry</param>
     Public Sub Add(addr As String)
         If addrDic.ContainsKey(addr) Then
             Throw New ArgumentException("This data entry has presented in the database: " & addr)
         End If
         addrDic.Add(addr, New DataEntry(addr))
     End Sub
-
+    ''' <summary>
+    ''' This function sets an entry with new tag name.
+    ''' </summary>
+    ''' <param name="addr">The address of the entry</param>
     Public Sub UpdateTagName(addr As String, name As String)
         If Not addrDic.ContainsKey(addr) Then
             Throw New KeyNotFoundException("The data entry is not presented in the database: " & addr)
         End If
         addrDic(addr).TagName = name
     End Sub
-
+    ''' <summary>
+    ''' This function sets an entry with a new description.
+    ''' </summary>
+    ''' <param name="addr">The address of the entry</param>
     Public Sub UpdateDescription(addr As String, desp As String)
         If Not addrDic.ContainsKey(addr) Then
             Throw New KeyNotFoundException("The data entry is not presented in the database: " & addr)
@@ -133,14 +197,22 @@ Public Class PLC_DB
         End If
         addrDic(addr).MappingLogic = logic
     End Sub
-
+    ''' <summary>
+    ''' This function returns the mapping logic the involves the data entry with
+    ''' the given address. It will be used in dealing with many to one mapping
+    ''' </summary>
+    ''' <param name="addr">The address of the entry</param>
+    ''' <returns>A node that represents the logic.</returns>
     Public Function GetMappingLogic(addr As String) As Node
         If Not addrDic.ContainsKey(addr) Then
             Throw New KeyNotFoundException("The data entry is not presented in the database: " & addr)
         End If
         Return addrDic(addr).MappingLogic
     End Function
-
+    ''' <summary>
+    ''' This function finds all modified data entries after perform modbus mapping.
+    ''' </summary>
+    ''' <returns>A list of addresses that represents the modifed data entries.</returns>
     Public Function GetModifiedEntries() As List(Of String)
         Dim results As New List(Of String)
         For Each entry In addrDic
@@ -152,7 +224,9 @@ Public Class PLC_DB
     End Function
 
     Private coil_start = False
-    Public Function ExtractMapping(str As String) As List(Of Tuple(Of String, String))
+    'loadMapping() calls this function. It takes in a rung in text form and returns
+    'all the mappings it finds as a list of tuples.
+    Private Function ExtractMapping(str As String) As List(Of Tuple(Of String, String))
         Dim words As String() = str.Split(" "c)
         Dim results As New List(Of Tuple(Of String, String))
         For i As Integer = 0 To words.Length - 3
@@ -208,7 +282,7 @@ Public Class PLC_DB
         Next
         Return results
     End Function
-
+    'Extractmapping() calls this function to find register mapping.
     Private Sub FindRegMapping(logic As Node, results As List(Of Tuple(Of String, String)))
         Dim cur As Node = logic
         While cur IsNot Nothing AndAlso cur.Ins <> "BST"
@@ -221,7 +295,7 @@ Public Class PLC_DB
             ReadRegLogic(child, results)
         Next
     End Sub
-
+    'FindRegMapping() calls this function to find mappings embedded in the logic.
     Private Sub ReadRegLogic(logic As Node, results As List(Of Tuple(Of String, String)))
         If logic.Ins = "MOV" Then
             results.Add(New Tuple(Of String, String)(Regex.Replace(logic.Args(0), "\.[A-Z]{1,3}", ""), Regex.Replace(logic.Args(1), "\.[A-Z]{1,3}", "")))
@@ -237,19 +311,20 @@ Public Class PLC_DB
                 results.Add(New Tuple(Of String, String)(Regex.Replace(child1.Args(0), "\.[A-Z]{1,3}", ""), Regex.Replace(child1.Args(1), "\.[A-Z]{1,3}", "")))
                 results.Add(New Tuple(Of String, String)(Regex.Replace(child2.Args(0), "\.[A-Z]{1,3}", ""), Regex.Replace(child2.Args(1), "\.[A-Z]{1,3}", "")))
                 If Not ContainEntry(child1.Args(1)) Then
-                        Add(child1.Args(1))
-                    End If
-                    If Not ContainEntry(child2.Args(1)) Then
-                        Add(child2.Args(1))
-                    End If
-                    SetMappingLogic(child1.Args(1), logic)
-                    SetMappingLogic(child2.Args(1), logic)
+                    Add(child1.Args(1))
                 End If
-            ElseIf logic.Ins = "CPW" Then
-            Else
-                MessageBox.Show("not good: " & logic.ToString)
+                If Not ContainEntry(child2.Args(1)) Then
+                    Add(child2.Args(1))
+                End If
+                SetMappingLogic(child1.Args(1), logic)
+                SetMappingLogic(child2.Args(1), logic)
+            End If
+        ElseIf logic.Ins = "CPW" Then
+        Else
+            MessageBox.Show("not good: " & logic.ToString)
         End If
     End Sub
+    'Extractmapping() calls this function to find coil mapping.
     Private Sub FindCoilMapping(bst As Node, results As List(Of Tuple(Of String, String)))
         Dim count = 0
         For Each branch In bst.Children
@@ -306,8 +381,8 @@ Public Class PLC_DB
         End If
         Return stored
     End Function
-
-    Function ExtractAddresses(rung As String) As List(Of Tuple(Of String, String))
+    'ExtractMapping calls this function to extract the arguments of mov instruction
+    Private Function ExtractAddresses(rung As String) As List(Of Tuple(Of String, String))
         ' Define the regular expression pattern for addr format
         Dim addr As String = "((?:[A-Z]{1,3}\d{1,3}:\d{1,3}|(?:(?:I|O|S|U):\d{1,3}(?:\.\d{1,3})*))(?:\/\d{1,2})*)" 'This regex requires to map the addr as a whole
         Dim regex As New Regex("MOV " & addr & " " & addr)
