@@ -1,17 +1,17 @@
 ﻿Imports System.Net
+Imports System.Runtime.Remoting.Messaging
 Imports System.Text.RegularExpressions
 
 Public Class PLC_DB
     Private addrDic As Dictionary(Of String, DataEntry)
+    Private tag_ref_list As Dictionary(Of String, String)
     Public Sub New(proj As Object)
         If proj Is Nothing Then
             Throw New ArgumentException("The project instance is NULL.")
         End If
         addrDic = New Dictionary(Of String, DataEntry)
         Dim data_collection As Object = proj.AddrSymRecords
-        Dim programs As Object = proj.ProgramFiles
         LoadDataEntry(data_collection)
-        LoadMapping(programs)
     End Sub
 
     Public Function Empty() As Boolean
@@ -38,7 +38,7 @@ Public Class PLC_DB
         Next
     End Sub
 
-    Private Sub LoadMapping(programs As Object)
+    Public Sub LoadMapping(programs As Object)
         Dim numOfProg = programs.Count()
         Dim modbus_file As Object
         For i As Integer = 0 To numOfProg - 1
@@ -48,12 +48,15 @@ Public Class PLC_DB
                 For j As Integer = 0 To numOfRung - 1 'iterate through rungs
                     Dim mapping = ExtractMapping(modbus_file.GetRungAsAscii(j))
                     For Each pair In mapping
-                        addrDic(pair.Item1).AddMappingTo(pair.Item2)
-                        If Not ContainEntry(pair.Item2) Then
-                            Add(pair.Item2)
+                        If ContainEntry(pair.Item1) Then
+                            addrDic(pair.Item1).AddMappingTo(pair.Item2)
+                            If Not ContainEntry(pair.Item2) Then
+                                Add(pair.Item2)
+                            End If
+                            UpdateDescription(pair.Item2, addrDic(pair.Item1).Description)
+                            UpdateTagName(pair.Item2, addrDic(pair.Item1).TagName)
+                            addrDic(pair.Item2).AddMappedTo(pair.Item1)
                         End If
-                        addrDic(pair.Item2).CopyNameAndDesp(addrDic(pair.Item1))
-                        addrDic(pair.Item2).AddMappedTo(pair.Item1)
                     Next
                 Next
                 Exit For
@@ -100,7 +103,7 @@ Public Class PLC_DB
 
     Public Sub ChangeModifiedStatus(l As List(Of String))
         For Each addr In l
-            addrDic(addr).modified = False
+            addrDic(addr).isModified = False
         Next
     End Sub
     Public Sub Add(addr As String)
@@ -124,10 +127,24 @@ Public Class PLC_DB
         addrDic(addr).Description = desp
     End Sub
 
+    Public Sub SetMappingLogic(addr As String, logic As Node)
+        If Not addrDic.ContainsKey(addr) Then
+            Throw New KeyNotFoundException("The data entry is not presented in the database: " & addr)
+        End If
+        addrDic(addr).MappingLogic = logic
+    End Sub
+
+    Public Function GetMappingLogic(addr As String) As Node
+        If Not addrDic.ContainsKey(addr) Then
+            Throw New KeyNotFoundException("The data entry is not presented in the database: " & addr)
+        End If
+        Return addrDic(addr).MappingLogic
+    End Function
+
     Public Function GetModifiedEntries() As List(Of String)
         Dim results As New List(Of String)
         For Each entry In addrDic
-            If entry.Value.modified Then
+            If entry.Value.isModified Then
                 results.Add(entry.Value.Address)
             End If
         Next
@@ -140,13 +157,13 @@ Public Class PLC_DB
         Dim results As New List(Of Tuple(Of String, String))
         For i As Integer = 0 To words.Length - 3
             If coil_start = False AndAlso words(i) = "MOV" Then
-                Dim source As String = words(i + 1).Replace(".ACC", "")
-                If ContainEntry(source) Then
-                    results.Add(New Tuple(Of String, String)(source, words(i + 2)))
-                End If
                 If ContainEntry(words(i + 2)) AndAlso GetTagName(words(i + 2)) = "COIL_START" Then
                     coil_start = True
+                    Return results
                 End If
+                Dim logic As Node = Parser.Parse(New LinkedList(Of String)(words))
+                FindRegMapping(logic, results)
+                Return results
             End If
             If coil_start AndAlso words(i) = "OR" Then
                 ' MessageBox.Show(str)
@@ -156,7 +173,7 @@ Public Class PLC_DB
                 While cur IsNot Nothing
                     'out &= cur.ToString()
                     If cur.Ins = "BST" Then
-                        findcoilmapping(cur, results)
+                        FindCoilMapping(cur, results)
                     End If
                     cur = cur.NextIns
                 End While
@@ -192,7 +209,48 @@ Public Class PLC_DB
         Return results
     End Function
 
-    Private Sub findcoilmapping(bst As Node, results As List(Of Tuple(Of String, String)))
+    Private Sub FindRegMapping(logic As Node, results As List(Of Tuple(Of String, String)))
+        Dim cur As Node = logic
+        While cur IsNot Nothing AndAlso cur.Ins <> "BST"
+            cur = cur.NextIns
+        End While
+        If cur Is Nothing Then
+            Return
+        End If
+        For Each child In cur.Children
+            ReadRegLogic(child, results)
+        Next
+    End Sub
+
+    Private Sub ReadRegLogic(logic As Node, results As List(Of Tuple(Of String, String)))
+        If logic.Ins = "MOV" Then
+            results.Add(New Tuple(Of String, String)(logic.Args(0).Replace(".ACC", ""), logic.Args(1).Replace(".ACC", "")))
+        ElseIf logic.Ins = "EQU" Then
+            Dim cur As Node = logic
+            cur = cur.NextIns
+            If cur.Ins <> "BST" Then
+                Return
+            End If
+            Dim child1 As Node = cur.Children(0)
+            Dim child2 As Node = cur.Children(1)
+            If child1.Ins = "MOV" AndAlso child2.Ins = "MOV" Then
+                    results.Add(New Tuple(Of String, String)(child1.Args(0).Replace(".ACC", ""), child1.Args(1).Replace(".ACC", "")))
+                    results.Add(New Tuple(Of String, String)(child2.Args(0).Replace(".ACC", ""), child2.Args(1).Replace(".ACC", "")))
+                    If Not ContainEntry(child1.Args(1)) Then
+                        Add(child1.Args(1))
+                    End If
+                    If Not ContainEntry(child2.Args(1)) Then
+                        Add(child2.Args(1))
+                    End If
+                    SetMappingLogic(child1.Args(1), logic)
+                    SetMappingLogic(child2.Args(1), logic)
+                End If
+            ElseIf logic.Ins = "CPW" Then
+            Else
+                MessageBox.Show("not good: " & logic.ToString)
+        End If
+    End Sub
+    Private Sub FindCoilMapping(bst As Node, results As List(Of Tuple(Of String, String)))
         Dim count = 0
         For Each branch In bst.Children
             Dim cur = branch
@@ -239,6 +297,7 @@ Public Class PLC_DB
         If Not ContainEntry(des) Then
             Add(des)
         End If
+        SetMappingLogic(des, related.First)
         If related.First.Ins = "BST" Then
             addrDic(des).CopyNameAndDesp(addrDic(related.First.Children.First.Args(0)))
         Else
@@ -269,7 +328,8 @@ Public Class DataEntry
     Private desp As String
     Private des As List(Of String)
     Private src As List(Of String)
-    Public modified As Boolean
+    Private modified As Boolean
+    Private logic As Node
     Dim addr_format As New Regex("^(?:([A-Z]{1,3})(\d{1,3}):(\d{1,3})|(?:(I|O|S|U):(\d{1,3}(?:\.\d{1,3})*)))(?:\/(\d{1,2}))*(.*)$")
     Public Sub New(address As String, name As String, description As String)
         Dim match As Match = addr_format.Match(address)
@@ -335,6 +395,24 @@ Public Class DataEntry
         End Get
         Set(value As List(Of String))
             des = value
+        End Set
+    End Property
+
+    Public Property isModified As Boolean
+        Get
+            Return modified
+        End Get
+        Set(value As Boolean)
+            modified = value
+        End Set
+    End Property
+
+    Public Property MappingLogic As Node
+        Get
+            Return logic
+        End Get
+        Set(value As Node)
+            logic = value
         End Set
     End Property
     Public Sub AddMappingTo(addr As String)

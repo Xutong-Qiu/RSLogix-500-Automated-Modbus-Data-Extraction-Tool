@@ -8,7 +8,7 @@ Public Class Form1
     Private data_collection As Object
     Private db As PLC_DB
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button, Preview_Change_Button}
+        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button}
         For Each btn In buttons
             btn.Enabled = False
         Next
@@ -114,13 +114,13 @@ Public Class Form1
         Dim invalid = 0
         Dim content = New List(Of String())
         Dim reverse_mapping As New Dictionary(Of String, List(Of String))
-        For Each addr In modbusDic.Keys
-            For Each des In modbusDic(addr)
+        For Each addr In db.GetModifiedEntries
+            For Each des In db.GetMappingSrc(addr)
                 If reverse_mapping.ContainsKey(des) Then
                     reverse_mapping(des).Add(addr)
                     If reverse_mapping(des).Count > 1 Then
                         If Not invalid_mapping.ContainsKey(des) Then
-                            invalid_mapping.add(des, "")
+                            invalid_mapping.Add(des, "")
                         End If
                     End If
                 Else
@@ -151,12 +151,15 @@ Public Class Form1
     End Sub
 
     Private Sub perform_mapping_Click(sender As Object, e As EventArgs) Handles perform_mapping.Click
+        db.LoadMapping(logixObj.ProgramFiles)
         DisplayList(WriteToProject(logixObj, db), {"Address", "Name", "Description"})
         MessageBox.Show("Successfully applied mappings to the project.")
     End Sub
 
 
-    Private Sub Preview_Change_Button_Click(sender As Object, e As EventArgs) Handles Preview_Change_Button.Click
+    Private Sub Preview_Change_Button_Click(sender As Object, e As EventArgs)
+        Dim programs As Object = logixObj.ProgramFiles
+        db.LoadMapping(programs)
         Dim modifiedList = db.GetModifiedEntries()
         Dim content = New List(Of String())
         For Each addr In modifiedList
