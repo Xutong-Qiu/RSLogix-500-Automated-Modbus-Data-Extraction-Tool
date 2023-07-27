@@ -74,6 +74,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CusComparer.vb" />
+    <Compile Include="DataEntry.vb" />
     <Compile Include="EventHandler.vb" />
     <Compile Include="form1.util.level2.vb" />
     <Compile Include="Form1.vb">

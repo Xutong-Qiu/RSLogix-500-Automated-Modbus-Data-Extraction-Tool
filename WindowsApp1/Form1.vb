@@ -152,8 +152,7 @@ Public Class Form1
 
     Private Sub perform_mapping_Click(sender As Object, e As EventArgs) Handles perform_mapping.Click
         db.LoadMapping(logixObj.ProgramFiles)
-        DisplayList(WriteToProject(logixObj, db), {"Address", "Name", "Description"})
-        MessageBox.Show("Successfully applied mappings to the project.")
+        DisplayList(WriteToProject(logixObj, db), {"Address", "Name", "Source", "Description"})
     End Sub
 
 

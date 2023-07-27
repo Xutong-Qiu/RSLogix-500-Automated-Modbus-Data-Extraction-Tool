@@ -38,9 +38,13 @@ Public Module IOHandler
             End If 'got the des addr instance
             record.SetSymbol(db.GetTagName(addr))
             record.SetDescription(db.GetDescription(addr))
-            content.Add({addr, db.GetTagName(addr), db.GetDescription(addr)})
+            Dim str As String = ""
+            For Each src In db.GetMappingSrc(addr)
+                str &= src + " "
+            Next
+            content.Add({addr, db.GetTagName(addr), str, db.GetDescription(addr)})
         Next
-        db.ChangeModifiedStatus(modifiedList)
+        'db.ChangeModifiedStatus(modifiedList)
         content.Sort(New DataEntryComparer())
         Return content
     End Function
