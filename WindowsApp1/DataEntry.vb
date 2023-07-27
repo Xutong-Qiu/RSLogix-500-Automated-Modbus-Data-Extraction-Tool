@@ -1,6 +1,10 @@
 ﻿
 Imports System.Text.RegularExpressions
-
+''' <summary>
+''' PLC Database
+''' An instance of this class stores all data of a RSS file. One database is binded to one file. To load a new file,
+''' a new instance needs to be created.
+''' </summary>
 Public Class DataEntry
     Private addr As String
     Private name As String

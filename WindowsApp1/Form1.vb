@@ -151,14 +151,14 @@ Public Class Form1
     End Sub
 
     Private Sub perform_mapping_Click(sender As Object, e As EventArgs) Handles perform_mapping.Click
-        db.LoadMapping(logixObj.ProgramFiles)
+        db.LoadMapping()
         DisplayList(WriteToProject(logixObj, db), {"Address", "Name", "Source", "Description"})
     End Sub
 
 
     Private Sub Preview_Change_Button_Click(sender As Object, e As EventArgs)
         Dim programs As Object = logixObj.ProgramFiles
-        db.LoadMapping(programs)
+        db.LoadMapping()
         Dim modifiedList = db.GetModifiedEntries()
         Dim content = New List(Of String())
         For Each addr In modifiedList

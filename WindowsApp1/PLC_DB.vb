@@ -235,7 +235,7 @@ Public Class PLC_DB
                     coil_start = True
                 Else
                     Dim logic As Node = Parser.Parse(New LinkedList(Of String)(words))
-                    FindRegMapping(logic, results)
+                    RegLogicAnalyzer.FindRegMapping(logic, results)
                     Return results
                 End If
             End If
@@ -282,48 +282,7 @@ Public Class PLC_DB
         Next
         Return results
     End Function
-    'Extractmapping() calls this function to find register mapping.
-    Private Sub FindRegMapping(logic As Node, results As List(Of Tuple(Of String, String)))
-        Dim cur As Node = logic
-        While cur IsNot Nothing AndAlso cur.Ins <> "BST"
-            cur = cur.NextIns
-        End While
-        If cur Is Nothing Then
-            Return
-        End If
-        For Each child In cur.Children
-            ReadRegLogic(child, results)
-        Next
-    End Sub
-    'FindRegMapping() calls this function to find mappings embedded in the logic.
-    Private Sub ReadRegLogic(logic As Node, results As List(Of Tuple(Of String, String)))
-        If logic.Ins = "MOV" Then
-            results.Add(New Tuple(Of String, String)(Regex.Replace(logic.Args(0), "\.[A-Z]{1,3}", ""), Regex.Replace(logic.Args(1), "\.[A-Z]{1,3}", "")))
-        ElseIf logic.Ins = "EQU" Then
-            Dim cur As Node = logic
-            cur = cur.NextIns
-            If cur.Ins <> "BST" Then
-                Return
-            End If
-            Dim child1 As Node = cur.Children(0)
-            Dim child2 As Node = cur.Children(1)
-            If child1.Ins = "MOV" AndAlso child2.Ins = "MOV" Then
-                results.Add(New Tuple(Of String, String)(Regex.Replace(child1.Args(0), "\.[A-Z]{1,3}", ""), Regex.Replace(child1.Args(1), "\.[A-Z]{1,3}", "")))
-                results.Add(New Tuple(Of String, String)(Regex.Replace(child2.Args(0), "\.[A-Z]{1,3}", ""), Regex.Replace(child2.Args(1), "\.[A-Z]{1,3}", "")))
-                If Not ContainEntry(child1.Args(1)) Then
-                    Add(child1.Args(1))
-                End If
-                If Not ContainEntry(child2.Args(1)) Then
-                    Add(child2.Args(1))
-                End If
-                SetMappingLogic(child1.Args(1), logic)
-                SetMappingLogic(child2.Args(1), logic)
-            End If
-        ElseIf logic.Ins = "CPW" Then
-        Else
-            MessageBox.Show("not good: " & logic.ToString)
-        End If
-    End Sub
+
     'Extractmapping() calls this function to find coil mapping.
     Private Sub FindCoilMapping(bst As Node, results As List(Of Tuple(Of String, String)))
         Dim count = 0

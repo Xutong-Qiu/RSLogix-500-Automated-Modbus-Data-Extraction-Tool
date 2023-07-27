@@ -165,6 +165,19 @@
 
 End Module
 
+
+''' <summary>
+''' The instances of this class represents nodes in the parse tree.
+''' A node is essientially an instruction.
+''' </summary>
+''' <remarks>
+''' Ins: represents the instruction represented by this node.
+''' NextIns: pointer points to next node
+''' Children: is not empty if only if the node is a branch instruction(BST). 
+'''             Each element in children reprents a brnach in BST instruction.
+''' Args: arugments of the current instruction
+''' </remarks>
+
 Public Class Node
     Public Property Ins As String
     Public Property Children As List(Of Node)
