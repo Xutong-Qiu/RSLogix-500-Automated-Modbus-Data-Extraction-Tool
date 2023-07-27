@@ -159,11 +159,11 @@ Public Class PLC_DB
             If coil_start = False AndAlso words(i) = "MOV" Then
                 If ContainEntry(words(i + 2)) AndAlso GetTagName(words(i + 2)) = "COIL_START" Then
                     coil_start = True
+                Else
+                    Dim logic As Node = Parser.Parse(New LinkedList(Of String)(words))
+                    FindRegMapping(logic, results)
                     Return results
                 End If
-                Dim logic As Node = Parser.Parse(New LinkedList(Of String)(words))
-                FindRegMapping(logic, results)
-                Return results
             End If
             If coil_start AndAlso words(i) = "OR" Then
                 ' MessageBox.Show(str)
@@ -262,7 +262,8 @@ Public Class PLC_DB
             If cur.Ins = "OR" Then
                 'MessageBox.Show(branch.Ins)
                 If rungSize = 2 AndAlso branch.Ins <> "BST" Then
-                    Dim addr As String = "^(?:([A-Z]{1,3})(\d{1,3}):(\d{1,3})|(?:(I|O|S|U):(\d{1,3}(?:\.\d{1,3})*)))(?:\/(\d{1,2}))*(.*)$"
+                    'This regex only matches everything before postfix(i.e. exclude \EN)
+                    Dim addr As String = "(?:([A-Z]{1,3})(\d{1,3}):(\d{1,3})|(?:(I|O|S|U):(\d{1,3}(?:\.\d{1,3})*)))(?:\/(\d{1,2}))*"
                     Dim regex As New Regex(addr)
                     Dim match As Match = regex.Match(branch.Args(0))
                     If match.Success = True Then
