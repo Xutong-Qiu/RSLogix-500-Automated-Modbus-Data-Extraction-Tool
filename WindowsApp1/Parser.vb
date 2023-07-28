@@ -4,7 +4,7 @@
     ''' This function parses the logic of the given token list
     ''' </summary>
     ''' <param name="tokens">The token list as a linked list of string</param>
-    ''' <returns>A node that represents the logic.</returns>
+    ''' <returns>A node that is the root of the parse tree representing the logic.</returns>
     Public Function Parse(tokens As LinkedList(Of String)) As Node
         If tokens.First.Value = "SOR" Then
             tokens.RemoveFirst()
@@ -177,7 +177,6 @@ End Module
 '''             Each element in children reprents a brnach in BST instruction.
 ''' Args: arugments of the current instruction
 ''' </remarks>
-
 Public Class Node
     Public Property Ins As String
     Public Property Children As List(Of Node)

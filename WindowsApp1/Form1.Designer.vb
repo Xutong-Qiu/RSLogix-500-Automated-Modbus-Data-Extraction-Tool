@@ -47,6 +47,7 @@ Partial Class Form1
         Me.display_data_button = New System.Windows.Forms.Button()
         Me.DataGridView1 = New System.Windows.Forms.DataGridView()
         Me.perform_mapping = New System.Windows.Forms.Button()
+        Me.load_ref_table = New System.Windows.Forms.Button()
         Me.GroupBox1.SuspendLayout()
         CType(Me.DataGridView1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
@@ -90,9 +91,8 @@ Partial Class Form1
         Me.Label2.AutoSize = True
         Me.Label2.Location = New System.Drawing.Point(51, 76)
         Me.Label2.Name = "Label2"
-        Me.Label2.Size = New System.Drawing.Size(39, 13)
+        Me.Label2.Size = New System.Drawing.Size(0, 13)
         Me.Label2.TabIndex = 4
-        Me.Label2.Text = "Label2"
         '
         'Label5
         '
@@ -108,9 +108,8 @@ Partial Class Form1
         Me.Label6.AutoSize = True
         Me.Label6.Location = New System.Drawing.Point(64, 104)
         Me.Label6.Name = "Label6"
-        Me.Label6.Size = New System.Drawing.Size(39, 13)
+        Me.Label6.Size = New System.Drawing.Size(0, 13)
         Me.Label6.TabIndex = 8
-        Me.Label6.Text = "Label6"
         '
         'GroupBox1
         '
@@ -129,7 +128,7 @@ Partial Class Form1
         '
         'find_invalid_mapping_button
         '
-        Me.find_invalid_mapping_button.Location = New System.Drawing.Point(12, 78)
+        Me.find_invalid_mapping_button.Location = New System.Drawing.Point(12, 136)
         Me.find_invalid_mapping_button.Name = "find_invalid_mapping_button"
         Me.find_invalid_mapping_button.Size = New System.Drawing.Size(157, 22)
         Me.find_invalid_mapping_button.TabIndex = 11
@@ -138,7 +137,7 @@ Partial Class Form1
         '
         'display_data_button
         '
-        Me.display_data_button.Location = New System.Drawing.Point(12, 106)
+        Me.display_data_button.Location = New System.Drawing.Point(12, 78)
         Me.display_data_button.Name = "display_data_button"
         Me.display_data_button.Size = New System.Drawing.Size(157, 23)
         Me.display_data_button.TabIndex = 12
@@ -155,18 +154,28 @@ Partial Class Form1
         '
         'perform_mapping
         '
-        Me.perform_mapping.Location = New System.Drawing.Point(12, 135)
+        Me.perform_mapping.Location = New System.Drawing.Point(12, 107)
         Me.perform_mapping.Name = "perform_mapping"
         Me.perform_mapping.Size = New System.Drawing.Size(157, 23)
         Me.perform_mapping.TabIndex = 14
         Me.perform_mapping.Text = "Perform Mapping"
         Me.perform_mapping.UseVisualStyleBackColor = True
         '
+        'load_ref_table
+        '
+        Me.load_ref_table.Location = New System.Drawing.Point(12, 213)
+        Me.load_ref_table.Name = "load_ref_table"
+        Me.load_ref_table.Size = New System.Drawing.Size(157, 22)
+        Me.load_ref_table.TabIndex = 15
+        Me.load_ref_table.Text = "Load Ref Table"
+        Me.load_ref_table.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(869, 450)
+        Me.ClientSize = New System.Drawing.Size(869, 451)
+        Me.Controls.Add(Me.load_ref_table)
         Me.Controls.Add(Me.perform_mapping)
         Me.Controls.Add(Me.DataGridView1)
         Me.Controls.Add(Me.display_data_button)
@@ -181,4 +190,6 @@ Partial Class Form1
         Me.ResumeLayout(False)
 
     End Sub
+
+    Friend WithEvents load_ref_table As Button
 End Class

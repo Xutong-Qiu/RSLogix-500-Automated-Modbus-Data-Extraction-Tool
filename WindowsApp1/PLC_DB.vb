@@ -75,7 +75,13 @@ Public Class PLC_DB
                                 Add(pair.Item2)
                             End If
                             UpdateDescription(pair.Item2, addrDic(pair.Item1).Description)
-                            UpdateTagName(pair.Item2, addrDic(pair.Item1).TagName)
+                            Dim name As String = addrDic(pair.Item1).TagName
+                            If name IsNot Nothing AndAlso name.Length + 1 >= 19 Then
+                                name = name.Substring(0, name.Length - 1) + "_"
+                            Else
+                                name += "_"
+                            End If
+                            UpdateTagName(pair.Item2, name)
                             addrDic(pair.Item2).AddMappedTo(pair.Item1)
                         End If
                     Next

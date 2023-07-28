@@ -2,6 +2,11 @@
 Imports System.Text.RegularExpressions
 Imports System.Windows.Forms.VisualStyles.VisualStyleElement.TreeView
 
+''' <summary>
+''' RegLogicAnalyzer
+''' This module analyzes the logic of the given parse tree and finds register mapping
+''' within it. It is based on logic patterns that have been seen in the PLC programs.
+''' </summary>
 Public Module RegLogicAnalyzer
     Public Sub FindRegMapping(root As Node, results As List(Of Tuple(Of String, String)))
         Dim cur As Node = root
