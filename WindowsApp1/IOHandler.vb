@@ -69,22 +69,16 @@ Public Module IOHandler
     ''' This function loads a RSS file
     ''' </summary>
     ''' <param name="rslogixApp">The RsLogix 500 Pro Application object that is used to open an RSS file</param>
+    ''' <param name="path">Thepath to the RSS file to be loaded</param>
     ''' <returns>A RSS project object obtained from the RSS file</returns>
-    Public Function LoadRSSFile(rslogixApp As Object) As Object
+    Public Function LoadRSSFile(path As String, rslogixApp As Object) As Object
         'Obtain path chose by the user
         Dim openFileDialog As New OpenFileDialog
-        Dim path As String
-        If openFileDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK Then
-            path = openFileDialog.FileName
-            Dim extension = IO.Path.GetExtension(path)
-            If extension <> ".RSS" Then
-                MessageBox.Show("The file must be an RSS file.")
-                Return Nothing
-            End If
-        Else
+        Dim extension = IO.Path.GetExtension(path)
+        If extension <> ".RSS" Then
+            MessageBox.Show("The file must be an RSS file.")
             Return Nothing
         End If
-
         'check if file is in use
         If File.Exists(path) Then
             Try

@@ -13,7 +13,7 @@ Public Class Form1
         For Each btn In buttons 'When the software is open. Disable all buttons except load file button
             btn.Enabled = False
         Next
-
+        'PictureBox1.Image = My.Resources.blank_image
     End Sub
 
     Private Sub load_file_Click(sender As Object, e As EventArgs) Handles load_file_button.Click
@@ -32,6 +32,7 @@ Public Class Form1
                 For Each btn In buttons
                     btn.Enabled = False
                 Next
+                rss_path.Text = "Not Loaded"
                 If logixObj IsNot Nothing Then
                     'change the second to true to save
                     logixObj.Close(False, False)
@@ -40,20 +41,29 @@ Public Class Form1
                 Return
             End If
         End If
-
-        logixObj = LoadRSSFile(logixApp)
+        'open file load dialog
+        Dim openFileDialog As New OpenFileDialog
+        Dim path As String
+        If openFileDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK Then
+            path = openFileDialog.FileName
+        Else
+            Return
+        End If
+        logixObj = LoadRSSFile(path, logixApp)
         If logixObj Is Nothing Then
             Return
         End If
         'preparing a new database
         db = New PLC_DB(logixObj)
-
+        'display rss file
+        rss_path.Text = path
         'enable all buttons
         For Each btn In buttons
             btn.Enabled = True
         Next
         find_invalid_mapping_button.Enabled = False
         MessageBox.Show("PLC program successfully loaded.")
+        Focus() 'Keep the window in the view after closing the message box
     End Sub
 
 
@@ -170,5 +180,18 @@ Public Class Form1
 
     Private Sub load_ref_table_Click(sender As Object, e As EventArgs) Handles load_ref_table.Click
         MessageBox.Show("Reserved for future")
+    End Sub
+
+
+    Private Sub Label3_Click(sender As Object, e As EventArgs) Handles RSS_file.Click
+
+    End Sub
+
+    Private Sub GroupBox1_Enter(sender As Object, e As EventArgs) Handles GroupBox1.Enter
+
+    End Sub
+
+    Private Sub GroupBox2_Enter(sender As Object, e As EventArgs) Handles GroupBox2.Enter
+
     End Sub
 End Class

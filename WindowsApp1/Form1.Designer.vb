@@ -48,8 +48,14 @@ Partial Class Form1
         Me.DataGridView1 = New System.Windows.Forms.DataGridView()
         Me.perform_mapping = New System.Windows.Forms.Button()
         Me.load_ref_table = New System.Windows.Forms.Button()
+        Me.RSS_file = New System.Windows.Forms.Label()
+        Me.rss_path = New System.Windows.Forms.Label()
+        Me.GroupBox2 = New System.Windows.Forms.GroupBox()
+        Me.ref_file = New System.Windows.Forms.Label()
+        Me.Label4 = New System.Windows.Forms.Label()
         Me.GroupBox1.SuspendLayout()
         CType(Me.DataGridView1, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.GroupBox2.SuspendLayout()
         Me.SuspendLayout()
         '
         'load_file_button
@@ -113,15 +119,16 @@ Partial Class Form1
         '
         'GroupBox1
         '
+        Me.GroupBox1.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         Me.GroupBox1.Controls.Add(Me.Label6)
         Me.GroupBox1.Controls.Add(Me.Label5)
         Me.GroupBox1.Controls.Add(Me.Label2)
         Me.GroupBox1.Controls.Add(Me.Label1)
         Me.GroupBox1.Controls.Add(Me.Search)
         Me.GroupBox1.Controls.Add(Me.TextBox1)
-        Me.GroupBox1.Location = New System.Drawing.Point(12, 263)
+        Me.GroupBox1.Location = New System.Drawing.Point(12, 413)
         Me.GroupBox1.Name = "GroupBox1"
-        Me.GroupBox1.Size = New System.Drawing.Size(157, 175)
+        Me.GroupBox1.Size = New System.Drawing.Size(157, 176)
         Me.GroupBox1.TabIndex = 10
         Me.GroupBox1.TabStop = False
         Me.GroupBox1.Text = "Search by Address"
@@ -146,10 +153,14 @@ Partial Class Form1
         '
         'DataGridView1
         '
+        Me.DataGridView1.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.DataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
         Me.DataGridView1.Location = New System.Drawing.Point(175, 12)
         Me.DataGridView1.Name = "DataGridView1"
-        Me.DataGridView1.Size = New System.Drawing.Size(682, 426)
+        Me.DataGridView1.RowHeadersWidth = 45
+        Me.DataGridView1.Size = New System.Drawing.Size(682, 528)
         Me.DataGridView1.TabIndex = 13
         '
         'perform_mapping
@@ -170,11 +181,63 @@ Partial Class Form1
         Me.load_ref_table.Text = "Load Ref Table"
         Me.load_ref_table.UseVisualStyleBackColor = True
         '
+        'RSS_file
+        '
+        Me.RSS_file.AutoSize = True
+        Me.RSS_file.Location = New System.Drawing.Point(6, 16)
+        Me.RSS_file.Name = "RSS_file"
+        Me.RSS_file.Size = New System.Drawing.Size(51, 13)
+        Me.RSS_file.TabIndex = 16
+        Me.RSS_file.Text = "RSS File:"
+        '
+        'rss_path
+        '
+        Me.rss_path.AutoSize = True
+        Me.rss_path.Location = New System.Drawing.Point(63, 16)
+        Me.rss_path.Name = "rss_path"
+        Me.rss_path.Size = New System.Drawing.Size(63, 13)
+        Me.rss_path.TabIndex = 17
+        Me.rss_path.Text = "Not Loaded"
+        '
+        'GroupBox2
+        '
+        Me.GroupBox2.Anchor = CType(((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.GroupBox2.Controls.Add(Me.Label4)
+        Me.GroupBox2.Controls.Add(Me.ref_file)
+        Me.GroupBox2.Controls.Add(Me.RSS_file)
+        Me.GroupBox2.Controls.Add(Me.rss_path)
+        Me.GroupBox2.Location = New System.Drawing.Point(175, 509)
+        Me.GroupBox2.Name = "GroupBox2"
+        Me.GroupBox2.Size = New System.Drawing.Size(682, 80)
+        Me.GroupBox2.TabIndex = 18
+        Me.GroupBox2.TabStop = False
+        Me.GroupBox2.Text = "Software Status"
+        '
+        'ref_file
+        '
+        Me.ref_file.AutoSize = True
+        Me.ref_file.Location = New System.Drawing.Point(6, 34)
+        Me.ref_file.Name = "ref_file"
+        Me.ref_file.Size = New System.Drawing.Size(46, 13)
+        Me.ref_file.TabIndex = 18
+        Me.ref_file.Text = "Ref File:"
+        '
+        'Label4
+        '
+        Me.Label4.AutoSize = True
+        Me.Label4.Location = New System.Drawing.Point(63, 34)
+        Me.Label4.Name = "Label4"
+        Me.Label4.Size = New System.Drawing.Size(63, 13)
+        Me.Label4.TabIndex = 19
+        Me.Label4.Text = "Not Loaded"
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(869, 451)
+        Me.ClientSize = New System.Drawing.Size(869, 601)
+        Me.Controls.Add(Me.GroupBox2)
         Me.Controls.Add(Me.load_ref_table)
         Me.Controls.Add(Me.perform_mapping)
         Me.Controls.Add(Me.DataGridView1)
@@ -182,14 +245,23 @@ Partial Class Form1
         Me.Controls.Add(Me.find_invalid_mapping_button)
         Me.Controls.Add(Me.GroupBox1)
         Me.Controls.Add(Me.load_file_button)
+        Me.MinimumSize = New System.Drawing.Size(885, 540)
         Me.Name = "Form1"
-        Me.Text = "Form1"
+        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
+        Me.Text = "Modbus Extraction"
         Me.GroupBox1.ResumeLayout(False)
         Me.GroupBox1.PerformLayout()
         CType(Me.DataGridView1, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.GroupBox2.ResumeLayout(False)
+        Me.GroupBox2.PerformLayout()
         Me.ResumeLayout(False)
 
     End Sub
 
     Friend WithEvents load_ref_table As Button
+    Friend WithEvents RSS_file As Label
+    Friend WithEvents rss_path As Label
+    Friend WithEvents GroupBox2 As GroupBox
+    Friend WithEvents Label4 As Label
+    Friend WithEvents ref_file As Label
 End Class
