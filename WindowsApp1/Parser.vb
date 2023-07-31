@@ -45,7 +45,8 @@
             Case "CPW"
                 ans = ParseCPW(Tokens)
             Case Else
-                MessageBox.Show("invalid instruction: " + token)
+                MessageBox.Show("Invalid instruction: " + token)
+                Return Nothing
         End Select
         If Tokens.First.Value <> "EOR" AndAlso Tokens.First.Value <> "NXB" AndAlso Tokens.First.Value <> "BND" Then
             ans.NextIns = ParseIns(Tokens)
@@ -65,6 +66,8 @@
     End Function
     Private Function ParseSWP(Tokens As LinkedList(Of String)) As Node
         Dim ans As New Node("SWP")
+        Tokens.RemoveFirst()
+        ans.Args.Add(Tokens.First.Value)
         Tokens.RemoveFirst()
         ans.Args.Add(Tokens.First.Value)
         Tokens.RemoveFirst()

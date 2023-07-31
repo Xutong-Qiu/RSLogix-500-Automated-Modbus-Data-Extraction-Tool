@@ -1,5 +1,11 @@
-﻿Imports System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar
-
+﻿Imports System.Security.Cryptography
+Imports System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar
+Imports System.Windows.Forms.VisualStyles.VisualStyleElement.TreeView
+''' <summary>
+''' CoilLogicAnalyzer
+''' This module analyzes the logic of the given parse tree and finds coil mapping
+''' within it. It is based on logic patterns that have been seen in the PLC programs.
+''' </summary>
 Public Module CoilLogicAnalyzer
     Public Sub FindCoilMapping(root As Node, results As List(Of Tuple(Of String, String)))
         Dim cur As Node = root
@@ -9,6 +15,9 @@ Public Module CoilLogicAnalyzer
             If cur IsNot Nothing AndAlso cur.Ins = "XIO" Then
                 cur = cur.NextIns
                 If cur.Ins = "BST" Then
+                    If CoilPatternSWP(cur, results) Then
+                        Return
+                    End If
                     For Each branch In cur.Children
                         If CoilPatternIgnored(branch, results, bit) Then
                             Continue For
@@ -30,7 +39,6 @@ Public Module CoilLogicAnalyzer
                 End If
             End If
         End If
-
     End Sub
 
     'MOV 0 to coil
@@ -77,6 +85,28 @@ Public Module CoilLogicAnalyzer
             cur = cur.NextIns
             If cur IsNot Nothing Then
                 Return CoilPattern1(cur, results, bit)
+            End If
+        End If
+        Return False
+    End Function
+
+    'MOV/JSR/MOV/SWP
+    Private Function CoilPatternSWP(root As Node, results As List(Of Tuple(Of String, String))) As Boolean
+        Dim cur As Node = root
+        If cur IsNot Nothing AndAlso cur.Ins = "BST" Then
+            If cur.Children.Count = 4 Then
+                If cur.Children(0).Ins = "MOV" AndAlso cur.Children(1).Ins = "JSR" AndAlso cur.Children(2).Ins = "MOV" AndAlso cur.Children(3).Ins = "SWP" Then
+                    Dim src As String = cur.Children(0).Args(0)
+                    Dim des As String = cur.Children(2).Args(1)
+                    If src <> des Then
+                        For count As Integer = 0 To 15
+                            Dim full_addr1 = src & "/" & count.ToString
+                            Dim full_addr2 = des & "/" & count.ToString
+                            results.Add(New Tuple(Of String, String)(full_addr1, full_addr2))
+                        Next
+                    End If
+                    Return True
+                End If
             End If
         End If
         Return False

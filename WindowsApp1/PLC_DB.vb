@@ -1,4 +1,5 @@
-﻿Imports System.Text.RegularExpressions
+﻿Imports System.Runtime.Remoting.Messaging
+Imports System.Text.RegularExpressions
 ''' <summary>
 ''' PLC Database
 ''' An instance of this class stores all data of a RSS file. One database is binded to one file. To load a new file,
@@ -72,7 +73,7 @@ Public Class PLC_DB
                     For Each pair In mappings 'for each mapping pair
                         If ContainEntry(pair.Item1) Then 'if bd contain src
                             Dim name As String = addrDic(pair.Item1).TagName
-                            If name = "ALWAYS_OFF" Then 'skip always_off
+                            If name Is Nothing OrElse name = "ALWAYS_OFF" Then 'skip always_off
                                 Continue For
                             End If
                             If Not ContainEntry(pair.Item2) Then 'if no mapping target, add mapping target
@@ -266,27 +267,8 @@ Public Class PLC_DB
                 Return results
                 'check if the current rung is SWP coil mapping
             ElseIf words(i) = "SWP" Then
-                Dim temp = ExtractAddresses(str)
-                Dim src As String = ""
-                Dim des As String = ""
-                For Each pair As Tuple(Of String, String) In temp
-                    If ContainEntry(pair.Item2) AndAlso GetTagName(pair.Item2) = "WORD_TO_REVERSE" Then
-                        src = pair.Item1
-                    ElseIf ContainEntry(pair.Item1) AndAlso GetTagName(pair.Item1) = "REVERSED_WORD" Then
-                        des = pair.Item2
-                    End If
-                Next
-                'if self map to self, not gonna do anything
-                If src <> des Then
-                    For count As Integer = 0 To 15
-                        Dim full_addr1 = src & "/" & count.ToString
-                        Dim full_addr2 = des & "/" & count.ToString
-                        If Not ContainEntry(full_addr1) Then
-                            Continue For
-                        End If
-                        results.Add(New Tuple(Of String, String)(full_addr1, full_addr2))
-                    Next
-                End If
+                Dim logic As Node = Parser.Parse(New LinkedList(Of String)(words))
+                CoilLogicAnalyzer.FindCoilMapping(logic, results)
                 Return results
             End If
         Next
@@ -349,20 +331,6 @@ Public Class PLC_DB
             addrDic(des).CopyNameAndDesp(addrDic(related.First.Args(0)))
         End If
         Return stored
-    End Function
-    'ExtractMapping calls this function to extract the arguments of mov instruction
-    Private Function ExtractAddresses(rung As String) As List(Of Tuple(Of String, String))
-        ' Define the regular expression pattern for addr format
-        Dim addr As String = "((?:[A-Z]{1,3}\d{1,3}:\d{1,3}|(?:(?:I|O|S|U):\d{1,3}(?:\.\d{1,3})*))(?:\/\d{1,2})*)" 'This regex requires to map the addr as a whole
-        Dim regex As New Regex("MOV " & addr & " " & addr)
-        Dim matches As MatchCollection = regex.Matches(rung)
-        Dim results As New List(Of Tuple(Of String, String))
-        For Each match In matches
-            'MessageBox.Show(match.Groups(1).ToString & match.Groups(2).ToString)
-            results.Add(New Tuple(Of String, String)(match.Groups(1).Value, match.Groups(2).Value))
-        Next
-
-        Return results
     End Function
 
 End Class

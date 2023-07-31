@@ -245,7 +245,7 @@ Partial Class Form1
         Me.Controls.Add(Me.find_invalid_mapping_button)
         Me.Controls.Add(Me.GroupBox1)
         Me.Controls.Add(Me.load_file_button)
-        Me.MinimumSize = New System.Drawing.Size(885, 540)
+        Me.MinimumSize = New System.Drawing.Size(885, 642)
         Me.Name = "Form1"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Modbus Extraction"
