@@ -89,6 +89,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AddressSolver.vb" />
+    <Compile Include="CoilLogicAnalyzer.vb" />
     <Compile Include="CusComparer.vb" />
     <Compile Include="DataEntry.vb" />
     <Compile Include="EventHandler.vb" />

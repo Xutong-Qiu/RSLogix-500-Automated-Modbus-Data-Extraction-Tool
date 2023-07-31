@@ -56,6 +56,7 @@ Public Class PLC_DB
             End If
         Next
     End Sub
+
     ''' <summary>
     ''' This function loads all the modbus mapping information into the current database.
     ''' </summary>
@@ -63,25 +64,28 @@ Public Class PLC_DB
         Dim numOfProg = programs.Count()
         Dim modbus_file As Object
         For i As Integer = 0 To numOfProg - 1
-            If programs.Item(i) IsNot Nothing AndAlso programs.Item(i).Name = "MODBUS" Then
+            If programs.Item(i) IsNot Nothing AndAlso programs.Item(i).Name = "MODBUS" Then 'retrieve modbus program file
                 modbus_file = programs.Item(i)
                 Dim numOfRung = modbus_file.NumberOfRungs
-                For j As Integer = 0 To numOfRung - 1 'iterate through rungs
-                    Dim mapping = ExtractMapping(modbus_file.GetRungAsAscii(j))
-                    For Each pair In mapping
-                        If ContainEntry(pair.Item1) Then
-                            addrDic(pair.Item1).AddMappingTo(pair.Item2)
-                            If Not ContainEntry(pair.Item2) Then
+                For j As Integer = 0 To numOfRung - 1 'iterate through rungs in the modbus file
+                    Dim mappings = ExtractMapping(modbus_file.GetRungAsAscii(j)) 'for each rung, extract mappings embedded in it
+                    For Each pair In mappings 'for each mapping pair
+                        If ContainEntry(pair.Item1) Then 'if bd contain src
+                            Dim name As String = addrDic(pair.Item1).TagName
+                            If name = "ALWAYS_OFF" Then 'skip always_off
+                                Continue For
+                            End If
+                            If Not ContainEntry(pair.Item2) Then 'if no mapping target, add mapping target
                                 Add(pair.Item2)
                             End If
-                            UpdateDescription(pair.Item2, addrDic(pair.Item1).Description)
-                            Dim name As String = addrDic(pair.Item1).TagName
                             If name IsNot Nothing AndAlso name.Length + 1 >= 19 Then
                                 name = name.Substring(0, name.Length - 1) + "_"
                             Else
                                 name += "_"
                             End If
                             UpdateTagName(pair.Item2, name)
+                            UpdateDescription(pair.Item2, addrDic(pair.Item1).Description)
+                            addrDic(pair.Item1).AddMappingTo(pair.Item2)
                             addrDic(pair.Item2).AddMappedTo(pair.Item1)
                         End If
                     Next
@@ -90,6 +94,7 @@ Public Class PLC_DB
             End If
         Next
     End Sub
+
     ''' <summary>
     ''' This function checks whether a entry with the given address is present in the data base.
     ''' This function must be called before any attempt to access an entry in this database to 
@@ -236,6 +241,7 @@ Public Class PLC_DB
         Dim words As String() = str.Split(" "c)
         Dim results As New List(Of Tuple(Of String, String))
         For i As Integer = 0 To words.Length - 3
+            'Check if the current rung is register mapping
             If coil_start = False AndAlso words(i) = "MOV" Then
                 If ContainEntry(words(i + 2)) AndAlso GetTagName(words(i + 2)) = "COIL_START" Then
                     coil_start = True
@@ -245,38 +251,36 @@ Public Class PLC_DB
                     Return results
                 End If
             End If
+            'Check if the current rung is coil mapping
             If coil_start AndAlso words(i) = "OR" Then
                 ' MessageBox.Show(str)
-                Dim ans As Node = Parser.Parse(New LinkedList(Of String)(words))
-                'Dim out As String = ""
-                Dim cur As Node = ans
+                Dim logic As Node = Parser.Parse(New LinkedList(Of String)(words))
+                Dim cur As Node = logic
+                CoilLogicAnalyzer.FindCoilMapping(logic, results)
                 While cur IsNot Nothing
-                    'out &= cur.ToString()
                     If cur.Ins = "BST" Then
                         FindCoilMapping(cur, results)
                     End If
                     cur = cur.NextIns
                 End While
                 Return results
-                'MessageBox.Show("Parser result:" + Environment.NewLine + out)
-                'MessageBox.Show(str)
+                'check if the current rung is SWP coil mapping
             ElseIf words(i) = "SWP" Then
                 Dim temp = ExtractAddresses(str)
                 Dim src As String = ""
                 Dim des As String = ""
                 For Each pair As Tuple(Of String, String) In temp
-                    'MessageBox.Show(pair.Item1 & pair.Item2)
                     If ContainEntry(pair.Item2) AndAlso GetTagName(pair.Item2) = "WORD_TO_REVERSE" Then
                         src = pair.Item1
                     ElseIf ContainEntry(pair.Item1) AndAlso GetTagName(pair.Item1) = "REVERSED_WORD" Then
                         des = pair.Item2
                     End If
                 Next
+                'if self map to self, not gonna do anything
                 If src <> des Then
                     For count As Integer = 0 To 15
                         Dim full_addr1 = src & "/" & count.ToString
                         Dim full_addr2 = des & "/" & count.ToString
-                        'MessageBox.Show(full_addr1 & " " & full_addr2)
                         If Not ContainEntry(full_addr1) Then
                             Continue For
                         End If

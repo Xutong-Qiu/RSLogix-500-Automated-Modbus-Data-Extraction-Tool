@@ -29,7 +29,7 @@ Public Module RegLogicAnalyzer
                     If RegPattern5(branch, results) Then
                         Continue For
                     End If
-                    MessageBox.Show("logic not found: " & branch.ToString)
+                    MessageBox.Show("Register logic not found: " & branch.ToString)
                 Next
             End If
         End If
