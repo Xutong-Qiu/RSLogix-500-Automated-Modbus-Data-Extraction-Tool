@@ -1,5 +1,12 @@
 ﻿Imports System.Text.RegularExpressions
 
+
+''' <summary>
+''' This class defines data entry comparers that are used to compare and sort data entries displayed
+''' on the datagrid. It does so by calling the address comparer method and pass x(0), y(0) as its
+''' parameter. This is because in a data entry, the first column is address. So a data entry comparer 
+''' is just using address comparer to compare the addresses.
+''' </summary>
 Public Class DataEntryComparer
     Implements IComparer(Of String())
 
@@ -8,6 +15,11 @@ Public Class DataEntryComparer
         Return com.Compare(x(0), y(0))
     End Function
 End Class
+
+''' <summary>
+''' This class defines address comparers that are used to compare and sort the addresses. It 
+''' uses regex to parse the letter and integers in the given address string and compare them.
+''' </summary>
 Public Class AddrComparer
     Implements IComparer(Of String)
 

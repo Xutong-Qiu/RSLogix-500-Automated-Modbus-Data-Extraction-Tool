@@ -1,7 +1,8 @@
 ﻿Module Parser
 
     ''' <summary>
-    ''' This function parses the logic of the given token list
+    ''' This function parses the logic of the given token list and returns
+    ''' a parse tree.
     ''' </summary>
     ''' <param name="tokens">The token list as a linked list of string</param>
     ''' <returns>A node that is the root of the parse tree representing the logic.</returns>

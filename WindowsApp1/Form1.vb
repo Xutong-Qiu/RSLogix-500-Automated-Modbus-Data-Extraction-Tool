@@ -7,9 +7,10 @@ Public Class Form1
     Private logixObj As Object
     Private data_collection As Object
     Private db As PLC_DB
+
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button}
-        For Each btn In buttons
+        For Each btn In buttons 'When the software is open. Disable all buttons except load file button
             btn.Enabled = False
         Next
 
@@ -71,7 +72,7 @@ Public Class Form1
 
     Private Sub Search_Click(sender As Object, e As EventArgs) Handles Search.Click
         Dim addr As String = TextBox1.Text
-        addr = addr.Trim()
+        addr = addr.Trim() 'get rid of all leading and tailing spaces
         Dim rowIndex = -1
         For Each row As DataGridViewRow In DataGridView1.Rows
             If row.Cells(0).Value IsNot Nothing AndAlso row.Cells(0).Value.ToString().Equals(addr) Then
