@@ -1,5 +1,6 @@
 ﻿Imports System.Runtime.Remoting.Messaging
 Imports System.Text.RegularExpressions
+Imports Microsoft.Office.Interop.Excel
 ''' <summary>
 ''' PLC Database
 ''' An instance of this class stores all data of a RSS file. One database is binded to one file. To load a new file,
@@ -19,6 +20,7 @@ Public Class PLC_DB
             Throw New ArgumentException("The project instance is NULL.")
         End If
         addrDic = New Dictionary(Of String, DataEntry)
+        tag_ref_list = New Dictionary(Of String, String)
         Dim data_collection As Object = proj.AddrSymRecords
         LoadDataEntry(data_collection)
         programs = proj.ProgramFiles
@@ -58,6 +60,18 @@ Public Class PLC_DB
         Next
     End Sub
 
+    Private Function ChangeName(Name As String) As String
+        Dim words As String() = Name.Split("_")
+        Dim changedName As String = ""
+        For Each word In words
+            If tag_ref_list.ContainsKey(word) Then
+                changedName &= tag_ref_list(word) + "_"
+            Else
+                changedName &= word + "_"
+            End If
+        Next
+        Return changedName
+    End Function
     ''' <summary>
     ''' This function loads all the modbus mapping information into the current database.
     ''' </summary>
@@ -79,12 +93,7 @@ Public Class PLC_DB
                             If Not ContainEntry(pair.Item2) Then 'if no mapping target, add mapping target
                                 Add(pair.Item2)
                             End If
-                            UpdateTagName(pair.Item2, name)
-                            If name IsNot Nothing AndAlso name.Length + 1 >= 19 Then
-                                name = name.Substring(0, name.Length - 1) + "_"
-                            Else
-                                name += "_"
-                            End If
+                            UpdateTagName(pair.Item2, ChangeName(name))
                             UpdateDescription(pair.Item2, addrDic(pair.Item1).Description)
                             addrDic(pair.Item1).AddMappingTo(pair.Item2)
                             addrDic(pair.Item2).AddMappedTo(pair.Item1)

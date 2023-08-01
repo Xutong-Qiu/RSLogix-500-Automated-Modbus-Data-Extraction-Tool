@@ -2,6 +2,7 @@
 Imports System.Windows.Forms.AxHost
 Imports System.Runtime.InteropServices
 Imports Microsoft.Office.Interop.Excel
+Imports Microsoft.Office.Interop
 
 Public Module IOHandler
     ''' <summary>
@@ -101,14 +102,14 @@ Public Module IOHandler
         Return rslogixProj
     End Function
 
-    Public Function LoadCSV() As List(Of String())
+    Public Function LoadExcel() As Dictionary(Of String, String)
         Dim openFileDialog As New OpenFileDialog
         Dim path As String
         If openFileDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK Then
             path = openFileDialog.FileName
             Dim extension = IO.Path.GetExtension(path)
-            If extension <> ".CSV" Then
-                MessageBox.Show("The file must be an CSV file.")
+            If extension <> ".xlsx" Then
+                MessageBox.Show("The file must be an Excel file.")
                 Return Nothing
             End If
         Else
@@ -135,38 +136,40 @@ Public Module IOHandler
 
         ' Assuming the data is in the first worksheet (you can adjust the sheet index as needed)
         Dim worksheet As Worksheet = DirectCast(workbook.Worksheets(1), Worksheet)
+        Dim range As Excel.Range = worksheet.UsedRange
 
-        ' Get the range of cells containing data
-        Dim range As Range = worksheet.UsedRange
+        Dim numRows As Integer = range.Rows.Count
+        Dim dataDictionary As New Dictionary(Of String, String)
 
-        ' Get the number of rows and columns with data
-        Dim rowCount As Integer = range.Rows.Count
-        Dim columnCount As Integer = range.Columns.Count
+        ' Loop through the data and add to the dictionary
+        For row As Integer = 1 To numRows
+            Dim key As String = CType(range.Cells(row, 1).Value, String) ' Assuming the key is in the first column
+            Dim value As String = CType(range.Cells(row, 2).Value, String) ' Assuming the value is in the second column
 
-        ' Read the data from the Excel file
-        Dim data As New List(Of String())
-
-        ' Read the data from the Excel file and add it to the list
-        For i As Integer = 1 To rowCount
-            Dim rowValues(columnCount - 1) As String
-            For j As Integer = 1 To columnCount
-                rowValues(j - 1) = range.Cells(i, j).Value.ToString()
-            Next
-            data.Add(rowValues)
+            If Not String.IsNullOrEmpty(key) Then ' Ignore rows with empty keys
+                dataDictionary.Add(key, value)
+            End If
         Next
 
         ' Close the workbook and release resources
         workbook.Close()
-        Marshal.ReleaseComObject(range)
-        Marshal.ReleaseComObject(worksheet)
-        Marshal.ReleaseComObject(workbook)
-
-        ' Quit Excel application and release resources
         excelApp.Quit()
-        Marshal.ReleaseComObject(excelApp)
+        ReleaseObject(worksheet)
+        ReleaseObject(workbook)
+        ReleaseObject(excelApp)
 
-        ' Return the list of string arrays containing the Excel file data
-        Return data
-
+        Return dataDictionary
     End Function
+
+    Private Sub ReleaseObject(ByVal obj As Object)
+        Try
+            System.Runtime.InteropServices.Marshal.ReleaseComObject(obj)
+            obj = Nothing
+        Catch ex As Exception
+            obj = Nothing
+        Finally
+            GC.Collect()
+        End Try
+    End Sub
+
 End Module

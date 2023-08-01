@@ -177,7 +177,8 @@ Public Class Form1
     End Sub
 
     Private Sub load_ref_table_Click(sender As Object, e As EventArgs) Handles load_ref_table.Click
-        MessageBox.Show("Reserved for future")
+
+        IOHandler.LoadExcel()
     End Sub
 
     Dim toggle As Boolean = False
