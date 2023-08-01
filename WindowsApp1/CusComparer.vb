@@ -16,6 +16,45 @@ Public Class DataEntryComparer
     End Function
 End Class
 
+
+Public Class DataGridEntryComparer
+    Implements IComparer
+
+    Private descending As Boolean
+
+    Public Sub New(descending As Boolean)
+        Me.descending = descending
+    End Sub
+
+    Public Function Compare(x As Object, y As Object) As Integer Implements IComparer.Compare
+        Dim dataGridViewRowX As DataGridViewRow = TryCast(x, DataGridViewRow)
+        Dim dataGridViewRowY As DataGridViewRow = TryCast(y, DataGridViewRow)
+        If dataGridViewRowX IsNot Nothing AndAlso dataGridViewRowY IsNot Nothing Then
+            Dim cellValueX As Object = dataGridViewRowX.Cells(0).Value
+            Dim cellValueY As Object = dataGridViewRowY.Cells(0).Value
+
+            If cellValueX Is Nothing AndAlso cellValueY Is Nothing Then
+                Return 0
+            ElseIf cellValueX Is Nothing Then
+                Return -1
+            ElseIf cellValueY Is Nothing Then
+                Return 1
+            End If
+            ' In this example, we assume the cell values are integers.
+            Dim addrx As String = cellValueX.ToString
+            Dim addry As String = cellValueY.ToString
+            Dim com = New AddrComparer
+            If descending Then
+                Return com.Compare(addrx, addry)
+            Else
+                Return com.Compare(addry, addrx)
+            End If
+
+        End If
+        Return 0
+    End Function
+End Class
+
 ''' <summary>
 ''' This class defines address comparers that are used to compare and sort the addresses. It 
 ''' uses regex to parse the letter and integers in the given address string and compare them.

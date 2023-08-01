@@ -158,22 +158,20 @@ Public Class Form1
     End Sub
 
     Private Sub DisplayList(list As List(Of String()), cols As String())
-        ' Create a new DataTable.
-        Dim table As New DataTable()
+        DataGridView1.Rows.Clear()
+        DataGridView1.Columns.Clear()
 
         ' Assuming the string arrays all have the same length.
         For Each colName As String In cols
-            table.Columns.Add(colName)
+            Dim col As New DataGridViewTextBoxColumn
+            col.Name = colName
+            DataGridView1.Columns.Add(col)
         Next
 
-        ' Populate the DataTable from the List
         For Each item() As String In list
-            table.Rows.Add(item)
+            DataGridView1.Rows.Add(item)
         Next
 
-        ' Bind the DataTable to the DataGridView
-        DataGridView1.DataSource = Nothing
-        DataGridView1.DataSource = table
         DataGridView1.RowHeadersVisible = False
         DataGridView1.AutoResizeColumns()
     End Sub
@@ -182,16 +180,12 @@ Public Class Form1
         MessageBox.Show("Reserved for future")
     End Sub
 
-
-    Private Sub Label3_Click(sender As Object, e As EventArgs) Handles RSS_file.Click
-
-    End Sub
-
-    Private Sub GroupBox1_Enter(sender As Object, e As EventArgs) Handles GroupBox1.Enter
-
-    End Sub
-
-    Private Sub GroupBox2_Enter(sender As Object, e As EventArgs) Handles GroupBox2.Enter
-
+    Dim toggle As Boolean = False
+    Private Sub DataGridView1_ColumnHeaderMouseClick(sender As Object, e As DataGridViewCellMouseEventArgs) Handles DataGridView1.ColumnHeaderMouseClick
+        ' Check if the clicked column is the one you want to perform custom sorting on.
+        If e.ColumnIndex = 0 Then
+            DataGridView1.Sort(New DataGridEntryComparer(toggle))
+            toggle = Not toggle
+        End If
     End Sub
 End Class

@@ -79,12 +79,12 @@ Public Class PLC_DB
                             If Not ContainEntry(pair.Item2) Then 'if no mapping target, add mapping target
                                 Add(pair.Item2)
                             End If
+                            UpdateTagName(pair.Item2, name)
                             If name IsNot Nothing AndAlso name.Length + 1 >= 19 Then
                                 name = name.Substring(0, name.Length - 1) + "_"
                             Else
                                 name += "_"
                             End If
-                            UpdateTagName(pair.Item2, name)
                             UpdateDescription(pair.Item2, addrDic(pair.Item1).Description)
                             addrDic(pair.Item1).AddMappingTo(pair.Item2)
                             addrDic(pair.Item2).AddMappedTo(pair.Item1)
