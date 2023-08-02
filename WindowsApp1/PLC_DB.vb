@@ -56,11 +56,14 @@ Public Class PLC_DB
             desp = desp.Replace(Environment.NewLine, " ")
             If record.Address IsNot Nothing And record.Address <> "" Then
                 Add(record.Address, record.Symbol, desp)
+                'If record.DeviceCode IsNot Nothing And record.DeviceCode <> "" Then
+                '   MessageBox.Show(record.DeviceCode)
+                'End If
             End If
         Next
     End Sub
 
-    Private Function ChangeName(Name As String) As String
+    Private Function ChangeName(Name As String, extension As String) As String
         Dim words As String() = Name.Split("_")
         Dim changedName As String = ""
         For Each word In words
@@ -70,12 +73,18 @@ Public Class PLC_DB
                 changedName &= word + "_"
             End If
         Next
+        If extension <> "" Then
+            changedName &= extension
+        End If
         Return changedName
     End Function
     ''' <summary>
     ''' This function loads all the modbus mapping information into the current database.
     ''' </summary>
     Public Sub LoadMapping()
+        If tag_ref_list.Count = 0 Then
+            LoadDefaultTagNameRef()
+        End If
         Dim numOfProg = programs.Count()
         Dim modbus_file As Object
         For i As Integer = 0 To numOfProg - 1
@@ -85,17 +94,24 @@ Public Class PLC_DB
                 For j As Integer = 0 To numOfRung - 1 'iterate through rungs in the modbus file
                     Dim mappings = ExtractMapping(modbus_file.GetRungAsAscii(j)) 'for each rung, extract mappings embedded in it
                     For Each pair In mappings 'for each mapping pair
-                        If ContainEntry(pair.Item1) Then 'if bd contain src
-                            Dim name As String = addrDic(pair.Item1).TagName
-                            If name Is Nothing OrElse name = "ALWAYS_OFF" Then 'skip always_off
+                        Dim extension As String = GetExtension(pair.Item1)
+                        Dim src_addr As String = Tune(pair.Item1)
+                        If ContainEntry(src_addr) Then 'if bd contain src
+                            Dim src_name As String = addrDic(src_addr).TagName
+                            If src_name Is Nothing OrElse src_name = "ALWAYS_OFF" Then 'skip always_off
                                 Continue For
                             End If
                             If Not ContainEntry(pair.Item2) Then 'if no mapping target, add mapping target
                                 Add(pair.Item2)
                             End If
-                            UpdateTagName(pair.Item2, ChangeName(name))
-                            UpdateDescription(pair.Item2, addrDic(pair.Item1).Description)
-                            addrDic(pair.Item1).AddMappingTo(pair.Item2)
+                            Dim target_name As String = ChangeName(src_name, extension)
+                            If target_name.Length > 20 Then
+                                MessageBox.Show("Tag Name exceeds 20 characters: " & target_name)
+                            Else
+                                UpdateTagName(pair.Item2, target_name)
+                            End If
+                            UpdateDescription(pair.Item2, addrDic(src_addr).Description)
+                            addrDic(src_addr).AddMappingTo(pair.Item2)
                             addrDic(pair.Item2).AddMappedTo(pair.Item1)
                         End If
                     Next
@@ -267,17 +283,6 @@ Public Class PLC_DB
                 Dim logic As Node = Parser.Parse(New LinkedList(Of String)(words))
                 Dim cur As Node = logic
                 CoilLogicAnalyzer.FindCoilMapping(logic, results)
-                While cur IsNot Nothing
-                    If cur.Ins = "BST" Then
-                        FindCoilMapping(cur, results)
-                    End If
-                    cur = cur.NextIns
-                End While
-                Return results
-                'check if the current rung is SWP coil mapping
-            ElseIf words(i) = "SWP" Then
-                Dim logic As Node = Parser.Parse(New LinkedList(Of String)(words))
-                CoilLogicAnalyzer.FindCoilMapping(logic, results)
                 Return results
             End If
         Next
@@ -342,4 +347,43 @@ Public Class PLC_DB
         Return stored
     End Function
 
+    Private Sub LoadDefaultTagNameRef()
+        If tag_ref_list.Count = 0 Then
+            tag_ref_list.Add("TEMP", "TEM")
+            tag_ref_list.Add("ACTIVE", "ACT")
+            tag_ref_list.Add("OVERLAP", "OVL")
+            tag_ref_list.Add("MOISTURE", "MOIST")
+            tag_ref_list.Add("SEONSOR", "SNSR")
+            tag_ref_list.Add("READ", "RD")
+            tag_ref_list.Add("DATA", "DAT")
+            tag_ref_list.Add("ALARM", "ALM")
+            tag_ref_list.Add("STATE", "STAT")
+            tag_ref_list.Add("PURIFY", "PUR")
+            tag_ref_list.Add("BATTERY", "BATT")
+            tag_ref_list.Add("WARN", "WRN")
+            tag_ref_list.Add("ERROR", "ERR")
+            tag_ref_list.Add("CONTACTORS", "CTR")
+            tag_ref_list.Add("CONTACTOR", "CTR")
+            tag_ref_list.Add("EQUALIZE", "EQL")
+            tag_ref_list.Add("TIMER", "TMR")
+            tag_ref_list.Add("MINUTES", "MIN")
+            tag_ref_list.Add("MINUTE", "MIN")
+            tag_ref_list.Add("HOURS", "HRS")
+            tag_ref_list.Add("VALVE", "VLV")
+            tag_ref_list.Add("SERVICE", "SVC")
+            tag_ref_list.Add("PURGE", "PURG")
+            tag_ref_list.Add("RELAY", "RLY")
+            tag_ref_list.Add("CUSTOM", "CUST")
+            tag_ref_list.Add("GET", "G")
+            tag_ref_list.Add("REGEN", "RG")
+        End If
+    End Sub
+    Public Property TagAbbrDictionary As Dictionary(Of String, String)
+        Get
+            Return tag_ref_list
+        End Get
+        Set(value As Dictionary(Of String, String))
+            tag_ref_list = value
+        End Set
+    End Property
 End Class

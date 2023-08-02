@@ -39,7 +39,7 @@ Public Module RegLogicAnalyzer
     Private Function RegPattern1(root As Node, results As List(Of Tuple(Of String, String))) As Boolean
         Dim cur As Node = root
         If cur IsNot Nothing AndAlso cur.Ins = "MOV" Then
-            results.Add(New Tuple(Of String, String)(Tune(cur.Args(0)), Tune(cur.Args(1))))
+            results.Add(New Tuple(Of String, String)(cur.Args(0), Tune(cur.Args(1))))
             Return True
         End If
         Return False
@@ -51,7 +51,7 @@ Public Module RegLogicAnalyzer
         If cur IsNot Nothing AndAlso cur.Ins = "EQU" Then
             cur = cur.NextIns
             If cur IsNot Nothing AndAlso cur.Ins = "MOV" Then
-                results.Add(New Tuple(Of String, String)(Tune(cur.Args(0)), Tune(cur.Args(1))))
+                results.Add(New Tuple(Of String, String)(cur.Args(0), Tune(cur.Args(1))))
                 Return True
             End If
         End If
@@ -97,7 +97,7 @@ Public Module RegLogicAnalyzer
     Private Function RegPattern5(root As Node, results As List(Of Tuple(Of String, String))) As Boolean
         Dim cur As Node = root
         If cur IsNot Nothing AndAlso cur.Ins = "CPW" Then
-            Dim src As String = Tune(cur.Args(0))
+            Dim src As String = cur.Args(0)
             Dim des As String = Tune(cur.Args(1))
             Dim offset As Integer = CSng(cur.Args(2)) - 1
             results.Add(New Tuple(Of String, String)(src, des))

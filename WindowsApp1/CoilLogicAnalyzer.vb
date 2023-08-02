@@ -34,7 +34,7 @@ Public Module CoilLogicAnalyzer
                             bit += 1
                             Continue For
                         End If
-                        MessageBox.Show("Coil logic not found: " & branch.ToString)
+                        ' MessageBox.Show("Coil logic not found: " & branch.ToString)
                     Next
                 End If
             End If
@@ -54,7 +54,7 @@ Public Module CoilLogicAnalyzer
     Private Function CoilPattern1(root As Node, results As List(Of Tuple(Of String, String)), bit As Integer) As Boolean
         Dim cur As Node = root
         If cur IsNot Nothing AndAlso cur.Ins = "XIC" Then
-            Dim src As String = Tune(cur.Args(0))
+            Dim src As String = cur.Args(0)
             cur = cur.NextIns
             If cur IsNot Nothing AndAlso cur.Ins = "OR" Then
                 results.Add(New Tuple(Of String, String)(src, Tune(cur.Args(0) & "/" & bit)))
@@ -68,7 +68,7 @@ Public Module CoilLogicAnalyzer
     Private Function CoilPattern2(root As Node, results As List(Of Tuple(Of String, String)), bit As Integer) As Boolean
         Dim cur As Node = root
         If cur IsNot Nothing AndAlso cur.Ins = "EQU" Then
-            Dim src As String = Tune(cur.Args(1))
+            Dim src As String = cur.Args(1)
             cur = cur.NextIns
             If cur IsNot Nothing AndAlso cur.Ins = "OR" Then
                 results.Add(New Tuple(Of String, String)(src, Tune(cur.Args(0) & "/" & bit)))

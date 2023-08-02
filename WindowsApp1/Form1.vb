@@ -9,7 +9,8 @@ Public Class Form1
     Private db As PLC_DB
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button}
+        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button, load_ref_table_button}
+
         For Each btn In buttons 'When the software is open. Disable all buttons except load file button
             btn.Enabled = False
         Next
@@ -176,9 +177,35 @@ Public Class Form1
         DataGridView1.AutoResizeColumns()
     End Sub
 
-    Private Sub load_ref_table_Click(sender As Object, e As EventArgs) Handles load_ref_table.Click
-
-        IOHandler.LoadExcel()
+    Private Sub load_ref_table_Click(sender As Object, e As EventArgs) Handles load_ref_table_button.Click
+        Dim openFileDialog As New OpenFileDialog
+        Dim path As String
+        If openFileDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK Then
+            path = openFileDialog.FileName
+            Dim extension = IO.Path.GetExtension(path)
+            If extension <> ".xlsx" Then
+                MessageBox.Show("The file must be an Excel file.")
+                Return
+            End If
+        Else
+            Return
+        End If
+        'check if file is in use
+        If File.Exists(path) Then
+            Try
+                Using fs As FileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.None)
+                End Using
+            Catch ex As IOException
+                MessageBox.Show("File is being used by other applications.")
+                Return
+            End Try
+        Else
+            Dim fs = File.Create(path)
+            fs.Close()
+        End If
+        db.TagAbbrDictionary = IOHandler.LoadExcel(path)
+        ref_file_status.Text = path
+        MessageBox.Show("Reference File Loaded.")
     End Sub
 
     Dim toggle As Boolean = False

@@ -12,6 +12,7 @@ Public Class DataEntry
     Private des As List(Of String)
     Private src As List(Of String)
     Private modified As Boolean
+    Private ext As String
     Private logic As Node
     Dim addr_format As New Regex("^(?:([A-Z]{1,3})(\d{1,3}):(\d{1,3})|(?:(I|O|S|U):(\d{1,3}(?:\.\d{1,3})*)))(?:\/(\d{1,2}))*(.*)$")
     Public Sub New(address As String, name As String, description As String)
@@ -25,6 +26,7 @@ Public Class DataEntry
         modified = False
         des = New List(Of String)
         src = New List(Of String)
+        ext = ""
     End Sub
 
     Public Sub New(address As String)
@@ -36,6 +38,7 @@ Public Class DataEntry
         modified = False
         des = New List(Of String)
         src = New List(Of String)
+        ext = ""
     End Sub
 
     Public Sub CopyNameAndDesp(other As DataEntry)
@@ -120,5 +123,12 @@ Public Class DataEntry
             src = value
         End Set
     End Property
-
+    Public Property Extension As String
+        Get
+            Return ext
+        End Get
+        Set(value As String)
+            ext = value
+        End Set
+    End Property
 End Class

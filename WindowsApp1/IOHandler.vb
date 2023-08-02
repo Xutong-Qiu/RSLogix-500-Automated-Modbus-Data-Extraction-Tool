@@ -102,32 +102,7 @@ Public Module IOHandler
         Return rslogixProj
     End Function
 
-    Public Function LoadExcel() As Dictionary(Of String, String)
-        Dim openFileDialog As New OpenFileDialog
-        Dim path As String
-        If openFileDialog.ShowDialog() = System.Windows.Forms.DialogResult.OK Then
-            path = openFileDialog.FileName
-            Dim extension = IO.Path.GetExtension(path)
-            If extension <> ".xlsx" Then
-                MessageBox.Show("The file must be an Excel file.")
-                Return Nothing
-            End If
-        Else
-            Return Nothing
-        End If
-        'check if file is in use
-        If File.Exists(path) Then
-            Try
-                Using fs As FileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.None)
-                End Using
-            Catch ex As IOException
-                MessageBox.Show("File is being used by other applications.")
-                Return Nothing
-            End Try
-        Else
-            Dim fs = File.Create(path)
-            fs.Close()
-        End If
+    Public Function LoadExcel(path As String) As Dictionary(Of String, String)
 
         Dim excelApp As New Application()
 
