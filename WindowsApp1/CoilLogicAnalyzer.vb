@@ -7,7 +7,7 @@ Imports System.Windows.Forms.VisualStyles.VisualStyleElement.TreeView
 ''' within it. It is based on logic patterns that have been seen in the PLC programs.
 ''' </summary>
 Public Module CoilLogicAnalyzer
-    Public Sub FindCoilMapping(root As Node, results As List(Of Tuple(Of String, String)))
+    Public Sub FindCoilMapping(DB As PLC_DB, root As Node, results As List(Of Tuple(Of String, String)))
         Dim cur As Node = root
         Dim bit As Integer = 0
         If cur IsNot Nothing AndAlso cur.Ins = "EQU" Then
@@ -26,7 +26,7 @@ Public Module CoilLogicAnalyzer
                             bit += 1
                             Continue For
                         End If
-                        If CoilPattern2(branch, results, bit) Then
+                        If CoilPattern2(DB, branch, results, bit) Then
                             bit += 1
                             Continue For
                         End If
@@ -34,7 +34,8 @@ Public Module CoilLogicAnalyzer
                             bit += 1
                             Continue For
                         End If
-                        ' MessageBox.Show("Coil logic not found: " & branch.ToString)
+                        bit += 1
+                        MessageBox.Show("Coil logic not found: " & branch.ToString)
                     Next
                 End If
             End If
@@ -65,17 +66,20 @@ Public Module CoilLogicAnalyzer
     End Function
 
     'EQU->OR
-    Private Function CoilPattern2(root As Node, results As List(Of Tuple(Of String, String)), bit As Integer) As Boolean
+    Private Function CoilPattern2(DB As PLC_DB, root As Node, results As List(Of Tuple(Of String, String)), bit As Integer) As Boolean
         Dim cur As Node = root
         If cur IsNot Nothing AndAlso cur.Ins = "EQU" Then
             Dim src As String = cur.Args(1)
-            cur = cur.NextIns
-            If cur IsNot Nothing AndAlso cur.Ins = "OR" Then
-                results.Add(New Tuple(Of String, String)(src, Tune(cur.Args(0) & "/" & bit)))
-                Return True
+            If DB.GetTagName(src).Contains("STATE") Then
+                src = cur.Args(0)
             End If
-        End If
-        Return False
+            cur = cur.NextIns
+                If cur IsNot Nothing AndAlso cur.Ins = "OR" Then
+                    results.Add(New Tuple(Of String, String)(src, Tune(cur.Args(0) & "/" & bit)))
+                    Return True
+                End If
+            End If
+            Return False
     End Function
 
     'NEQ->XIC->OR
@@ -96,8 +100,8 @@ Public Module CoilLogicAnalyzer
         If cur IsNot Nothing AndAlso cur.Ins = "BST" Then
             If cur.Children.Count = 4 Then
                 If cur.Children(0).Ins = "MOV" AndAlso cur.Children(1).Ins = "JSR" AndAlso cur.Children(2).Ins = "MOV" AndAlso cur.Children(3).Ins = "SWP" Then
-                    Dim src As String = cur.Children(0).Args(0)
-                    Dim des As String = cur.Children(2).Args(1)
+                    Dim src As String = Tune(cur.Children(0).Args(0))
+                    Dim des As String = Tune(cur.Children(2).Args(1))
                     If src <> des Then
                         For count As Integer = 0 To 15
                             Dim full_addr1 = src & "/" & count.ToString

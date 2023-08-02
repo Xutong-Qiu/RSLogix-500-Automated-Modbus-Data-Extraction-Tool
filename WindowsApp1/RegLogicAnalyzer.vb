@@ -12,6 +12,9 @@ Public Module RegLogicAnalyzer
         Dim cur As Node = root
         If cur.Ins = "XIO" Then
             cur = cur.NextIns
+            If RegPattern0(cur, results) Then
+                Return
+            End If
             If cur.Ins = "BST" Then
                 For Each branch In cur.Children
                     If RegPattern1(branch, results) Then
@@ -34,6 +37,17 @@ Public Module RegLogicAnalyzer
             End If
         End If
     End Sub
+
+    'No Branch MOV case
+    Private Function RegPattern0(root As Node, results As List(Of Tuple(Of String, String))) As Boolean
+        Dim cur As Node = root
+        If cur IsNot Nothing AndAlso cur.Ins = "MOV" Then
+            results.Add(New Tuple(Of String, String)(cur.Args(0), Tune(cur.Args(1))))
+            Return True
+        End If
+        Return False
+    End Function
+
 
     'MOV case
     Private Function RegPattern1(root As Node, results As List(Of Tuple(Of String, String))) As Boolean

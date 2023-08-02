@@ -1,4 +1,5 @@
-﻿Imports System.Runtime.Remoting.Messaging
+﻿Imports System.IO
+Imports System.Runtime.Remoting.Messaging
 Imports System.Text.RegularExpressions
 Imports Microsoft.Office.Interop.Excel
 ''' <summary>
@@ -56,9 +57,6 @@ Public Class PLC_DB
             desp = desp.Replace(Environment.NewLine, " ")
             If record.Address IsNot Nothing And record.Address <> "" Then
                 Add(record.Address, record.Symbol, desp)
-                'If record.DeviceCode IsNot Nothing And record.DeviceCode <> "" Then
-                '   MessageBox.Show(record.DeviceCode)
-                'End If
             End If
         Next
     End Sub
@@ -83,7 +81,11 @@ Public Class PLC_DB
     ''' </summary>
     Public Sub LoadMapping()
         If tag_ref_list.Count = 0 Then
-            LoadDefaultTagNameRef()
+            Try
+                LoadDefaultTagNameRef()
+            Catch ex As FileNotFoundException
+                MessageBox.Show(ex.Message)
+            End Try
         End If
         Dim numOfProg = programs.Count()
         Dim modbus_file As Object
@@ -96,23 +98,24 @@ Public Class PLC_DB
                     For Each pair In mappings 'for each mapping pair
                         Dim extension As String = GetExtension(pair.Item1)
                         Dim src_addr As String = Tune(pair.Item1)
-                        If ContainEntry(src_addr) Then 'if bd contain src
+                        If ContainEntry(src_addr) Then 'if db contain src
                             Dim src_name As String = addrDic(src_addr).TagName
                             If src_name Is Nothing OrElse src_name = "ALWAYS_OFF" Then 'skip always_off
                                 Continue For
                             End If
-                            If Not ContainEntry(pair.Item2) Then 'if no mapping target, add mapping target
-                                Add(pair.Item2)
+                            Dim des_addr As String = pair.Item2
+                            If Not ContainEntry(des_addr) Then 'if no mapping target, add mapping target
+                                Add(des_addr)
                             End If
                             Dim target_name As String = ChangeName(src_name, extension)
                             If target_name.Length > 20 Then
                                 MessageBox.Show("Tag Name exceeds 20 characters: " & target_name)
                             Else
-                                UpdateTagName(pair.Item2, target_name)
+                                UpdateTagName(des_addr, target_name)
                             End If
-                            UpdateDescription(pair.Item2, addrDic(src_addr).Description)
-                            addrDic(src_addr).AddMappingTo(pair.Item2)
-                            addrDic(pair.Item2).AddMappedTo(pair.Item1)
+                            UpdateDescription(des_addr, addrDic(src_addr).Description)
+                            addrDic(src_addr).AddMappingTo(des_addr)
+                            addrDic(des_addr).AddMappedTo(pair.Item1)
                         End If
                     Next
                 Next
@@ -278,104 +281,55 @@ Public Class PLC_DB
                 End If
             End If
             'Check if the current rung is coil mapping
-            If coil_start AndAlso words(i) = "OR" Then
+            If coil_start AndAlso (words(i) = "OR" OrElse words(i) = "SWP") Then
                 ' MessageBox.Show(str)
                 Dim logic As Node = Parser.Parse(New LinkedList(Of String)(words))
                 Dim cur As Node = logic
-                CoilLogicAnalyzer.FindCoilMapping(logic, results)
+                CoilLogicAnalyzer.FindCoilMapping(Me, logic, results)
                 Return results
             End If
         Next
         Return results
     End Function
 
-    'Extractmapping() calls this function to find coil mapping.
-    Private Sub FindCoilMapping(bst As Node, results As List(Of Tuple(Of String, String)))
-        Dim count = 0
-        For Each branch In bst.Children
-            Dim cur = branch
-            Dim rungSize = 1
-            While cur.NextIns IsNot Nothing
-                rungSize += 1
-                cur = cur.NextIns
-            End While
-            If cur.Ins = "OR" Then
-                'MessageBox.Show(branch.Ins)
-                If rungSize = 2 AndAlso branch.Ins <> "BST" Then
-                    'This regex only matches everything before postfix(i.e. exclude \EN)
-                    Dim addr As String = "(?:([A-Z]{1,3})(\d{1,3}):(\d{1,3})|(?:(I|O|S|U):(\d{1,3}(?:\.\d{1,3})*)))(?:\/(\d{1,2}))*"
-                    Dim regex As New Regex(addr)
-                    Dim match As Match = regex.Match(branch.Args(0))
-                    If match.Success = True Then
-                        addr = match.Groups(0).ToString
-                    End If
-                    'MessageBox.Show(addr)
-                    If ContainEntry(addr) AndAlso GetTagName(addr) <> "ALWAYS_OFF" Then
-                        results.Add(New Tuple(Of String, String)(addr, cur.Args(0) & "/" & count))
-                    End If
-                ElseIf rungSize >= 2 Then
-                    Dim temp = branch
-                    Dim related = New List(Of Node)
-                    While temp IsNot cur
-                        related.Add(temp)
-                        temp = temp.NextIns
-                    End While
-                    Dim des = cur.Args(0) & "/" & count
-                    results.Add(New Tuple(Of String, String)(makeupmapping(related, des), des))
-                    'MessageBox.Show("This coil depends on multiple addresses: " & branch.ToString)
-                End If
-                count += 1
+    Public Function GetInvalidMapping() As List(Of String())
+        Dim content = New List(Of String())
+        For Each addr In addrDic.Keys
+            If addrDic(addr).MappingTo.Count <= 1 AndAlso addrDic(addr).MappedTo.Count <= 1 Then
+                Continue For
             End If
+            Dim des As String = ""
+            If addrDic(addr).MappingTo.Count > 1 Then
+                Dim target1 As String = GetMappingTarget(addr)(0)
+                Dim target2 As String = GetMappingTarget(addr)(1)
+                If GetTagName(target1) = GetTagName(target2) Then
+                    For Each d In addrDic(addr).MappingTo
+                        des &= d + " "
+                    Next
+                Else
+                    Continue For
+                End If
+            End If
+            Dim src As String = ""
+            If addrDic(addr).MappedTo.Count > 1 Then
+                For Each target In addrDic(addr).MappedTo
+                    src &= target + " "
+                Next
+            End If
+            content.Add({addr, des, src})
         Next
-    End Sub
-    'This function is reserved for future use
-    Private Function makeupmapping(related As List(Of Node), des As String) As String
-        'If Not invalid_mapping.ContainsKey(des) Then
-        '    invalid_mapping.add(des, "")
-        'End If
-        Dim addrs As List(Of String) = New List(Of String)
-        Dim stored = des
-        If Not ContainEntry(des) Then
-            Add(des)
-        End If
-        SetMappingLogic(des, related.First)
-        If related.First.Ins = "BST" Then
-            addrDic(des).CopyNameAndDesp(addrDic(related.First.Children.First.Args(0)))
-        Else
-            addrDic(des).CopyNameAndDesp(addrDic(related.First.Args(0)))
-        End If
-        Return stored
+        content.Sort(New DataEntryComparer)
+        Return content
     End Function
 
-    Private Sub LoadDefaultTagNameRef()
-        If tag_ref_list.Count = 0 Then
-            tag_ref_list.Add("TEMP", "TEM")
-            tag_ref_list.Add("ACTIVE", "ACT")
-            tag_ref_list.Add("OVERLAP", "OVL")
-            tag_ref_list.Add("MOISTURE", "MOIST")
-            tag_ref_list.Add("SEONSOR", "SNSR")
-            tag_ref_list.Add("READ", "RD")
-            tag_ref_list.Add("DATA", "DAT")
-            tag_ref_list.Add("ALARM", "ALM")
-            tag_ref_list.Add("STATE", "STAT")
-            tag_ref_list.Add("PURIFY", "PUR")
-            tag_ref_list.Add("BATTERY", "BATT")
-            tag_ref_list.Add("WARN", "WRN")
-            tag_ref_list.Add("ERROR", "ERR")
-            tag_ref_list.Add("CONTACTORS", "CTR")
-            tag_ref_list.Add("CONTACTOR", "CTR")
-            tag_ref_list.Add("EQUALIZE", "EQL")
-            tag_ref_list.Add("TIMER", "TMR")
-            tag_ref_list.Add("MINUTES", "MIN")
-            tag_ref_list.Add("MINUTE", "MIN")
-            tag_ref_list.Add("HOURS", "HRS")
-            tag_ref_list.Add("VALVE", "VLV")
-            tag_ref_list.Add("SERVICE", "SVC")
-            tag_ref_list.Add("PURGE", "PURG")
-            tag_ref_list.Add("RELAY", "RLY")
-            tag_ref_list.Add("CUSTOM", "CUST")
-            tag_ref_list.Add("GET", "G")
-            tag_ref_list.Add("REGEN", "RG")
+    Public Sub LoadDefaultTagNameRef()
+        Dim exePath As String = System.Windows.Forms.Application.StartupPath
+        Dim filePath As String = Path.Combine(exePath, "ref.xlsx")
+        ' Check if the file exists
+        If File.Exists(filePath) Then
+            tag_ref_list = LoadExcel(filePath)
+        Else
+            Throw New FileNotFoundException("filePath" & " Not Found!")
         End If
     End Sub
     Public Property TagAbbrDictionary As Dictionary(Of String, String)
@@ -386,4 +340,5 @@ Public Class PLC_DB
             tag_ref_list = value
         End Set
     End Property
+
 End Class

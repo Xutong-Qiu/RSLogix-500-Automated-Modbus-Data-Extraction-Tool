@@ -41,7 +41,7 @@ Public Module AddressSolver
     End Function
 
     Public Function GetExtension(addr As String) As String
-        Dim regex As New Regex("(?:([A-Z]{1,3})(\d{1,3}):(\d{1,3})|(?:(I|O|S|U):(\d{1,3}(?:\.\d{1,3})*)))(?:\/(\d{1,2}))*((?:\.|\/)[A-Z]{1,3})*")
+        Dim regex As New Regex("(?:([A-Z]{1,3})(\d{1,3}):(\d{1,3})|(?:(I|O|S|U):(\d{1,3}(?:\.\d{1,3})*)))(?:\/(\d{1,2}))*(?:\.|\/)([A-Z]{1,3})*")
         Dim match As Match = regex.Match(addr)
         If match.Success = True Then
             Return match.Groups(7).ToString

@@ -11,7 +11,7 @@ Public Module IOHandler
     ''' <param name="data">Data to be written to the file</param>
     ''' <param name="path">The path of the target file</param>
     ''' <returns>A boolean that indicates whether the operation is successful or not.</returns>
-    Public Function WriteToCSV(data As List(Of String()), path As String) As Boolean
+    Public Function WriteToCSV(data As List(Of String()), columnNames As String(), path As String) As Boolean
         If File.Exists(path) Then
             Try
                 Using fs As FileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.None)
@@ -27,6 +27,8 @@ Public Module IOHandler
             fs.Close()
         End If
         Using sw As New StreamWriter(path)
+            sw.WriteLine(String.Join(",", columnNames))
+
             For Each row As String() In data
                 sw.WriteLine(String.Join(",", row))
             Next

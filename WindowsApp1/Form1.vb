@@ -1,4 +1,5 @@
 ﻿Imports System.IO
+Imports System.Threading
 
 Public Class Form1
 
@@ -7,7 +8,7 @@ Public Class Form1
     Private logixObj As Object
     Private data_collection As Object
     Private db As PLC_DB
-
+    Private BGTask As Thread
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button, load_ref_table_button}
 
@@ -33,6 +34,8 @@ Public Class Form1
                 For Each btn In buttons
                     btn.Enabled = False
                 Next
+                DataGridView1.Rows.Clear()
+                DataGridView1.Columns.Clear()
                 rss_path.Text = "Not Loaded"
                 If logixObj IsNot Nothing Then
                     'change the second to true to save
@@ -56,6 +59,7 @@ Public Class Form1
         End If
         'preparing a new database
         db = New PLC_DB(logixObj)
+        StartLoadDBDefaultFile()
         'display rss file
         rss_path.Text = path
         'enable all buttons
@@ -121,21 +125,11 @@ Public Class Form1
     End Sub
 
     Private Sub find_invalid_mapping_button_click(sender As Object, e As EventArgs) Handles find_invalid_mapping_button.Click
-        Dim invalid = 0
-        Dim content = New List(Of String())
-        For Each addr In db.GetModifiedEntries
-            If db.GetMappingSrc(addr).Count = 1 Then
-                Continue For
-            End If
-            Dim s As String = ""
-            For Each src In db.GetMappingSrc(addr)
-                s &= src + " "
-            Next
-            content.Add({addr, s})
-        Next
-        content.Sort(New DataEntryComparer)
-        'WriteToCSV(content, "C:\Users\37239\OneDrive - Entegris\Desktop\export.csv")
-        DisplayList(content, {"Address", "Mapped To"})
+        Dim content As List(Of String()) = db.GetInvalidMapping()
+        Dim exePath As String = System.Windows.Forms.Application.StartupPath
+        Dim filePath As String = Path.Combine(exePath, "invalid.csv")
+        WriteToCSV(content, {"Address", "Mapping To", "Mapped To"}, filePath)
+        DisplayList(content, {"Address", "Mapping To", "Mapped To"})
     End Sub
 
     ' Handle the KeyDown event for your textbox
@@ -153,6 +147,7 @@ Public Class Form1
     End Sub
 
     Private Sub perform_mapping_Click(sender As Object, e As EventArgs) Handles perform_mapping.Click
+        WaitForBGTask()
         db.LoadMapping()
         find_invalid_mapping_button.Enabled = True
         DisplayList(WriteToProject(logixObj, db), {"Address", "Name", "Source", "Description"})
@@ -216,4 +211,28 @@ Public Class Form1
             toggle = Not toggle
         End If
     End Sub
+
+
+    Private Sub StartLoadDBDefaultFile()
+        BGTask = New Thread(AddressOf LoadDefaultFile)
+        BGTask.Start()
+    End Sub
+
+    Private Sub LoadDefaultFile()
+        Try
+            db.LoadDefaultTagNameRef()
+        Catch ex As FileNotFoundException
+            Return
+        End Try
+    End Sub
+
+
+    Private Sub WaitForBGTask()
+        ' Use Join to wait for the background thread to complete
+        If BGTask IsNot Nothing AndAlso BGTask.IsAlive Then
+            BGTask.Join()
+        End If
+    End Sub
+
+
 End Class
