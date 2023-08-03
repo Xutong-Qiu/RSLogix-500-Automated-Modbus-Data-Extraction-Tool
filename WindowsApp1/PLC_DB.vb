@@ -85,6 +85,7 @@ Public Class PLC_DB
                 LoadDefaultTagNameRef()
             Catch ex As FileNotFoundException
                 MessageBox.Show(ex.Message)
+                Return
             End Try
         End If
         Dim numOfProg = programs.Count()
@@ -98,12 +99,12 @@ Public Class PLC_DB
                     For Each pair In mappings 'for each mapping pair
                         Dim extension As String = GetExtension(pair.Item1)
                         Dim src_addr As String = Tune(pair.Item1)
+                        Dim des_addr As String = pair.Item2
                         If ContainEntry(src_addr) Then 'if db contain src
-                            Dim src_name As String = addrDic(src_addr).TagName
+                            Dim src_name As String = GetTagName(src_addr)
                             If src_name Is Nothing OrElse src_name = "ALWAYS_OFF" Then 'skip always_off
                                 Continue For
                             End If
-                            Dim des_addr As String = pair.Item2
                             If Not ContainEntry(des_addr) Then 'if no mapping target, add mapping target
                                 Add(des_addr)
                             End If
@@ -116,6 +117,7 @@ Public Class PLC_DB
                             UpdateDescription(des_addr, addrDic(src_addr).Description)
                             addrDic(src_addr).AddMappingTo(des_addr)
                             addrDic(des_addr).AddMappedTo(pair.Item1)
+
                         End If
                     Next
                 Next
@@ -329,7 +331,7 @@ Public Class PLC_DB
         If File.Exists(filePath) Then
             tag_ref_list = LoadExcel(filePath)
         Else
-            Throw New FileNotFoundException("filePath" & " Not Found!")
+            Throw New FileNotFoundException("The default translation table " & filePath & " Not Found!")
         End If
     End Sub
     Public Property TagAbbrDictionary As Dictionary(Of String, String)

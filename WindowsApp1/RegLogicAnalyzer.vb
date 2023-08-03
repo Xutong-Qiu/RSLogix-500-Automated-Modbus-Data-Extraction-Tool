@@ -15,6 +15,9 @@ Public Module RegLogicAnalyzer
             If RegPattern0(cur, results) Then
                 Return
             End If
+            If RegPattern01(cur, results) Then
+                Return
+            End If
             If cur.Ins = "BST" Then
                 For Each branch In cur.Children
                     If RegPattern1(branch, results) Then
@@ -39,6 +42,21 @@ Public Module RegLogicAnalyzer
     End Sub
 
     'No Branch MOV case
+    Private Function RegPattern01(root As Node, results As List(Of Tuple(Of String, String))) As Boolean
+        Dim cur As Node = root
+        If cur IsNot Nothing AndAlso cur.Ins = "CPW" Then
+            Dim src As String = cur.Args(0)
+            Dim des As String = Tune(cur.Args(1))
+            Dim offset As Integer = CSng(cur.Args(2)) - 1
+            results.Add(New Tuple(Of String, String)(src, des))
+            results.Add(New Tuple(Of String, String)(src, AddrAdder(des, offset)))
+            Return True
+        End If
+        Return False
+    End Function
+
+
+    'No Branch CPW case
     Private Function RegPattern0(root As Node, results As List(Of Tuple(Of String, String))) As Boolean
         Dim cur As Node = root
         If cur IsNot Nothing AndAlso cur.Ins = "MOV" Then
@@ -47,6 +65,7 @@ Public Module RegLogicAnalyzer
         End If
         Return False
     End Function
+
 
 
     'MOV case

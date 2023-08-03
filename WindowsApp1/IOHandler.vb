@@ -33,7 +33,7 @@ Public Module IOHandler
                 sw.WriteLine(String.Join(",", row))
             Next
         End Using
-        MessageBox.Show("Success!")
+        MessageBox.Show("Successfully written to " & path)
         Return True
     End Function
 
