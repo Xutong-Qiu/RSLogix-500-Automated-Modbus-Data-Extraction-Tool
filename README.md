@@ -1,4 +1,4 @@
-# RSLogix-500-Modbus-Data-Management-Tool
+# RSLogix-500-Automated-Modbus-Data-Extraction-Tool
 
 Short description of the project.
 
