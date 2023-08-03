@@ -106,9 +106,6 @@
       <DependentUpon>Form1.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="form1.util.level1.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="Interpreter.vb" />
     <Compile Include="IOHandler.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
