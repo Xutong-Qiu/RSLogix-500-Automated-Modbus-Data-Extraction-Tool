@@ -1,7 +1,4 @@
 ﻿Imports System.IO
-Imports System.Runtime.Remoting.Messaging
-Imports System.Text.RegularExpressions
-Imports Microsoft.Office.Interop.Excel
 ''' <summary>
 ''' PLC Database
 ''' An instance of this class stores all data of a RSS file. One database is binded to one file. To load a new file,
@@ -11,7 +8,8 @@ Public Class PLC_DB
     Private addrDic As Dictionary(Of String, DataEntry)
     Private tag_ref_list As Dictionary(Of String, String)
     Private programs As Object
-
+    Private coil_start_addr As String = ""
+    Private modbusList As List(Of String)
     ''' <summary>
     ''' The constructor of the PLC database
     ''' </summary>
@@ -25,6 +23,7 @@ Public Class PLC_DB
         Dim data_collection As Object = proj.AddrSymRecords
         LoadDataEntry(data_collection)
         programs = proj.ProgramFiles
+        modbusList = New List(Of String)
     End Sub
     ''' <summary>
     ''' This function checks whether the current database is empty
@@ -80,6 +79,8 @@ Public Class PLC_DB
     ''' This function loads all the modbus mapping information into the current database.
     ''' </summary>
     Public Sub LoadMapping()
+        coil_start = False
+        modbusList = New List(Of String)
         If tag_ref_list.Count = 0 Then
             Try
                 LoadDefaultTagNameRef()
@@ -115,19 +116,67 @@ Public Class PLC_DB
                                 UpdateTagName(des_addr, target_name)
                             End If
                             UpdateDescription(des_addr, addrDic(src_addr).Description)
+                            modbusList.Add(des_addr)
                             addrDic(src_addr).AddMappingTo(des_addr)
                             addrDic(des_addr).AddMappedTo(pair.Item1)
                         ElseIf src_addr = "" Then 'handles exception
                             If Not ContainEntry(des_addr) Then 'if no mapping target, add mapping target
                                 Add(des_addr)
                             End If
-                            SetModifiedStatus(des_addr, True)
+                            modbusList.Add(des_addr)
                         End If
                     Next
                 Next
                 Exit For
             End If
         Next
+        modbusList = modbusList.Distinct().ToList()
+    End Sub
+
+    Public Function GetModbusData() As List(Of String())
+        FindModbusData()
+        Dim content = New List(Of String())
+        Dim comp As New AddrComparer
+        modbusList.Sort(comp)
+        Dim coil_start As Integer = ConvertCoilAddr(coil_start_addr)
+        For Each addr In modbusList
+            If comp.Compare(addr, coil_start_addr.ToString) > 0 Then
+                content.Add({ConvertCoilAddr(addr).ToString, GetTagName(addr), GetDescription(addr)})
+            Else
+                content.Add({ConvertRegAddr(addr).ToString, GetTagName(addr), GetDescription(addr)})
+            End If
+        Next
+        Return content
+    End Function
+
+
+    Public Sub FindModbusData()
+        coil_start = False
+        Dim numOfProg = programs.Count()
+        Dim modbus_file As Object
+        For i As Integer = 0 To numOfProg - 1
+            If programs.Item(i) IsNot Nothing AndAlso programs.Item(i).Name = "MODBUS" Then 'retrieve modbus program file
+                modbus_file = programs.Item(i)
+                Dim numOfRung = modbus_file.NumberOfRungs
+                For j As Integer = 0 To numOfRung - 1 'iterate through rungs in the modbus file
+                    Dim mappings = ExtractMapping(modbus_file.GetRungAsAscii(j)) 'for each rung, extract mappings embedded in it
+                    For Each pair In mappings 'for each mapping pair
+                        Dim extension As String = GetExtension(pair.Item1)
+                        Dim src_addr As String = Tune(pair.Item1)
+                        Dim des_addr As String = pair.Item2
+                        If ContainEntry(src_addr) AndAlso ContainEntry(des_addr) Then 'if db contain src
+                            Dim src_name As String = GetTagName(src_addr)
+                            If src_name Is Nothing OrElse src_name = "ALWAYS_OFF" Then 'skip always_off
+                                Continue For
+                            End If
+                            modbusList.Add(des_addr)
+                        End If
+                    Next
+                Next
+                Exit For
+            End If
+        Next
+        modbusList = modbusList.Distinct().ToList()
     End Sub
 
     ''' <summary>
@@ -200,15 +249,6 @@ Public Class PLC_DB
         addrDic.Add(addr, New DataEntry(addr, name, desp))
     End Sub
 
-    Public Sub ChangeModifiedStatus(l As List(Of String))
-        For Each addr In l
-            addrDic(addr).isModified = False
-        Next
-    End Sub
-
-    Public Sub SetModifiedStatus(addr As String, val As Boolean)
-        addrDic(addr).isModified = val
-    End Sub
     ''' <summary>
     ''' This function adds a new entry to the database. It has a overload version that
     ''' takes in the address, tag name, and the description.
@@ -263,14 +303,8 @@ Public Class PLC_DB
     ''' This function finds all modified data entries after perform modbus mapping.
     ''' </summary>
     ''' <returns>A list of addresses that represents the modifed data entries.</returns>
-    Public Function GetModifiedEntries() As List(Of String)
-        Dim results As New List(Of String)
-        For Each entry In addrDic
-            If entry.Value.isModified Then
-                results.Add(entry.Value.Address)
-            End If
-        Next
-        Return results
+    Public Function GetModbusList() As List(Of String)
+        Return modbusList
     End Function
 
     Private coil_start = False
@@ -284,6 +318,7 @@ Public Class PLC_DB
             If coil_start = False AndAlso words(i) = "MOV" Then
                 If ContainEntry(words(i + 2)) AndAlso GetTagName(words(i + 2)) = "COIL_START" Then
                     coil_start = True
+                    coil_start_addr = words(i + 2)
                 Else
                     Dim logic As Node = Parser.Parse(New LinkedList(Of String)(words))
                     RegLogicAnalyzer.FindRegMapping(logic, results)

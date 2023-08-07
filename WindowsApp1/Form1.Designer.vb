@@ -53,6 +53,8 @@ Partial Class Form1
         Me.GroupBox2 = New System.Windows.Forms.GroupBox()
         Me.ref_file_status = New System.Windows.Forms.Label()
         Me.ref_file = New System.Windows.Forms.Label()
+        Me.modbus_doc = New System.Windows.Forms.Button()
+        Me.save_button = New System.Windows.Forms.Button()
         Me.GroupBox1.SuspendLayout()
         CType(Me.DataGridView1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.GroupBox2.SuspendLayout()
@@ -232,11 +234,31 @@ Partial Class Form1
         Me.ref_file.TabIndex = 18
         Me.ref_file.Text = "Ref File:"
         '
+        'modbus_doc
+        '
+        Me.modbus_doc.Location = New System.Drawing.Point(12, 254)
+        Me.modbus_doc.Name = "modbus_doc"
+        Me.modbus_doc.Size = New System.Drawing.Size(157, 22)
+        Me.modbus_doc.TabIndex = 19
+        Me.modbus_doc.Text = "Modbus Doc"
+        Me.modbus_doc.UseVisualStyleBackColor = True
+        '
+        'save_button
+        '
+        Me.save_button.Location = New System.Drawing.Point(12, 352)
+        Me.save_button.Name = "save_button"
+        Me.save_button.Size = New System.Drawing.Size(157, 22)
+        Me.save_button.TabIndex = 20
+        Me.save_button.Text = "Save"
+        Me.save_button.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(869, 601)
+        Me.Controls.Add(Me.save_button)
+        Me.Controls.Add(Me.modbus_doc)
         Me.Controls.Add(Me.GroupBox2)
         Me.Controls.Add(Me.load_ref_table_button)
         Me.Controls.Add(Me.perform_mapping)
@@ -264,4 +286,6 @@ Partial Class Form1
     Friend WithEvents GroupBox2 As GroupBox
     Friend WithEvents ref_file_status As Label
     Friend WithEvents ref_file As Label
+    Friend WithEvents modbus_doc As Button
+    Friend WithEvents save_button As Button
 End Class

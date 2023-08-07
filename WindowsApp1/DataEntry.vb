@@ -11,7 +11,6 @@ Public Class DataEntry
     Private desp As String
     Private des As List(Of String)
     Private src As List(Of String)
-    Private modified As Boolean
     Private ext As String
     Private logic As Node
     Dim addr_format As New Regex("^(?:([A-Z]{1,3})(\d{1,3}):(\d{1,3})|(?:(I|O|S|U):(\d{1,3}(?:\.\d{1,3})*)))(?:\/(\d{1,2}))*(.*)$")
@@ -23,7 +22,6 @@ Public Class DataEntry
         addr = address
         Me.name = name
         desp = description
-        modified = False
         des = New List(Of String)
         src = New List(Of String)
         ext = ""
@@ -37,7 +35,6 @@ Public Class DataEntry
         addr = address
         desp = ""
         name = ""
-        modified = False
         des = New List(Of String)
         src = New List(Of String)
         ext = ""
@@ -46,7 +43,6 @@ Public Class DataEntry
     Public Sub CopyNameAndDesp(other As DataEntry)
         name = other.TagName
         desp = other.Description
-        modified = True
     End Sub
     Public Property Address As String
         Get
@@ -63,7 +59,6 @@ Public Class DataEntry
         End Get
         Set(value As String)
             If name <> value Then
-                modified = True
             End If
             name = value
         End Set
@@ -75,7 +70,6 @@ Public Class DataEntry
         End Get
         Set(value As String)
             If desp <> value Then
-                modified = True
             End If
             desp = value
         End Set
@@ -87,15 +81,6 @@ Public Class DataEntry
         End Get
         Set(value As List(Of String))
             des = value
-        End Set
-    End Property
-
-    Public Property isModified As Boolean
-        Get
-            Return modified
-        End Get
-        Set(value As Boolean)
-            modified = value
         End Set
     End Property
 

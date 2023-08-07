@@ -163,7 +163,8 @@ Public Class Form1
         WaitForBGTask()
         db.LoadMapping()
         find_invalid_mapping_button.Enabled = True
-        DisplayListWithEditing(WriteToProject(logixObj, db), {"Address", "Name", "Source", "Description"})
+        DisplayList(WriteToProject(logixObj, db), {"Address", "Name", "Source", "Description"})
+        DataGridView1.ReadOnly = False
     End Sub
 
     Private Sub DisplayList(list As List(Of String()), cols As String())
@@ -183,29 +184,10 @@ Public Class Form1
 
         DataGridView1.RowHeadersVisible = False
         DataGridView1.AutoResizeColumns()
+        DataGridView1.ReadOnly = True
         DataGridView1.AllowUserToAddRows = False
     End Sub
 
-    Private Sub DisplayListWithEditing(list As List(Of String()), cols As String())
-        DataGridView1.Rows.Clear()
-        DataGridView1.Columns.Clear()
-
-        ' Assuming the string arrays all have the same length.
-        For Each colName As String In cols
-            Dim col As New DataGridViewTextBoxColumn
-            col.Name = colName
-            DataGridView1.Columns.Add(col)
-        Next
-
-        For Each item() As String In list
-            DataGridView1.Rows.Add(item)
-        Next
-
-        DataGridView1.RowHeadersVisible = False
-        DataGridView1.ReadOnly = False
-        DataGridView1.AutoResizeColumns()
-        DataGridView1.AllowUserToAddRows = False
-    End Sub
 
     Private Sub DataGridView1_CellBeginEdit(sender As Object, e As DataGridViewCellCancelEventArgs) Handles DataGridView1.CellBeginEdit
         ' Determine which column and row to allow editing
@@ -215,9 +197,6 @@ Public Class Form1
             ' Allow editing for the specified cell
             If cellContent Is Nothing OrElse cellContent = "" Then
                 e.Cancel = False
-                Dim desp As Object = DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).Value
-                Dim addr As Object = DataGridView1.Rows(e.RowIndex).Cells(0).Value
-                db.UpdateDescription(addr, desp)
             Else
                 e.Cancel = True
             End If
@@ -227,6 +206,9 @@ Public Class Form1
     End Sub
 
     Private Sub DataGridView1_CanEdit(sender As Object, e As DataGridViewCellEventArgs) Handles DataGridView1.CellClick, DataGridView1.CellEnter
+        If DataGridView1.ReadOnly = True Then
+            Return
+        End If
         Dim editableCols As New HashSet(Of Integer)({1, 3})
         If editableCols.Contains(e.ColumnIndex) AndAlso DataGridView1.Columns(3).HeaderText = "Description" Then
             If e.RowIndex >= 0 AndAlso e.ColumnIndex >= 0 AndAlso Not DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).ReadOnly Then
@@ -234,7 +216,13 @@ Public Class Form1
                 DataGridView1.BeginEdit(False)
             End If
         End If
+    End Sub
 
+    Private Sub DataGridView1_CellEndEdit(sender As Object, e As DataGridViewCellEventArgs) Handles DataGridView1.CellEndEdit
+        Dim desp As Object = DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).Value
+        Dim addr As Object = DataGridView1.Rows(e.RowIndex).Cells(0).Value
+        db.UpdateDescription(addr, desp)
+        DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).Style.BackColor = Color.LightBlue
     End Sub
     Private Sub DataGridView1_CellFormatting(sender As Object, e As DataGridViewCellFormattingEventArgs) Handles DataGridView1.CellFormatting
         ' Check if the cell's value is empty or Nothing
@@ -311,5 +299,12 @@ Public Class Form1
         End If
     End Sub
 
+    Private Sub modbus_doc_button_Click(sender As Object, e As EventArgs) Handles modbus_doc.Click
+        Dim content = db.GetModbusData()
+        DisplayList(content, {"Address", "Tag Name", "Description"})
+    End Sub
 
+    Private Sub save_button_Click(sender As Object, e As EventArgs) Handles save_button.Click
+        WriteToProject(logixObj, db)
+    End Sub
 End Class

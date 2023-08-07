@@ -31,7 +31,7 @@ Public Module IOHandler
     ''' <returns>A list of string array including all changed data entry which can be
     ''' then displayed on the datagrid using DisplayList().</returns>
     Public Function WriteToProject(proj As Object, db As PLC_DB) As List(Of String())
-        Dim modifiedList = db.GetModifiedEntries()
+        Dim modifiedList = db.GetModbusList()
         Dim content = New List(Of String())
         For Each addr In modifiedList
             Dim record = proj.AddrSymRecords.GetRecordViaAddrOrSym(addr, 0)

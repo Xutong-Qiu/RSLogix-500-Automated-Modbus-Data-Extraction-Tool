@@ -49,6 +49,27 @@ Public Module AddressSolver
         Return ""
     End Function
 
+    Public Function ConvertRegAddr(addr As String) As Integer
+        Dim regex As New Regex("(?:([A-Z]{1,3})(\d{1,3}):(\d{1,3})|(?:(I|O|S|U):(\d{1,3}(?:\.\d{1,3})*)))(?:\/(\d{1,2}))*(.*)")
+        Dim match As Match = regex.Match(addr)
+        If match.Success = True Then
+            Return CSng(match.Groups(3).ToString)
+        End If
+        Return -1
+    End Function
+    Public Function ConvertCoilAddr(addr As String) As String
+        Dim regex As New Regex("(?:([A-Z]{1,3})(\d{1,3}):(\d{1,3})|(?:(I|O|S|U):(\d{1,3}(?:\.\d{1,3})*)))(?:\/(\d{1,2}))*(.*)")
+        Dim match As Match = regex.Match(addr)
+        If match.Success = True Then
+            Dim num As Integer = CSng(match.Groups(3).ToString)
+            num *= 16
+            If match.Groups(6).ToString IsNot Nothing AndAlso match.Groups(6).ToString <> "" Then
+                num += match.Groups(6).ToString
+            End If
+            Return num
+            End If
+            Return -1
+    End Function
 End Module
 
 
