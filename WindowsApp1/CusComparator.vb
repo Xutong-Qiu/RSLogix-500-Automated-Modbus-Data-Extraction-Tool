@@ -83,7 +83,6 @@ Public Class AddrComparer
         Dim xaddr2 = If(matchx.Groups(3).ToString <> "", matchx.Groups(3).ToString, matchx.Groups(5).ToString)
         Dim yaddr2 = If(matchy.Groups(3).ToString <> "", matchy.Groups(3).ToString, matchy.Groups(5).ToString)
 
-        ' MessageBox.Show(xaddr2 + " " + yaddr2)
         If xaddr2 <> yaddr2 Then
             Return CSng(xaddr2).CompareTo(CSng(yaddr2))
         End If

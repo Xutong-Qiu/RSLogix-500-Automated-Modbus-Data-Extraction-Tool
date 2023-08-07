@@ -34,8 +34,8 @@ Public Module CoilLogicAnalyzer
                             bit += 1
                             Continue For
                         End If
+                        HandlesExceptionMapping(branch, results, bit)
                         bit += 1
-                        MessageBox.Show("Coil logic not found: " & branch.ToString)
                     Next
                 End If
             End If
@@ -115,4 +115,28 @@ Public Module CoilLogicAnalyzer
         End If
         Return False
     End Function
+
+
+    'HandlesExceptionMapping
+    Private Function HandlesExceptionMapping(root As Node, results As List(Of Tuple(Of String, String)), bit As Integer) As Boolean
+        Dim cur As Node = root
+        If cur IsNot Nothing AndAlso cur.Ins = "OR" Then
+            results.Add(New Tuple(Of String, String)("Exception", Tune(cur.Args(0)) & "/" & bit))
+            Return True
+        ElseIf cur Is Nothing Then
+            Return True
+        Else
+            If cur.Ins = "BST" Then
+                For Each branch In cur.Children
+                    HandlesExceptionMapping(branch, results, bit)
+                Next
+                HandlesExceptionMapping(cur.NextIns, results, bit)
+            Else
+                HandlesExceptionMapping(cur.NextIns, results, bit)
+            End If
+        End If
+        Return True
+    End Function
+
+
 End Module

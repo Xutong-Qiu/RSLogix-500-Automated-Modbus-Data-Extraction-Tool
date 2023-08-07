@@ -248,7 +248,7 @@ Partial Class Form1
         Me.MinimumSize = New System.Drawing.Size(885, 642)
         Me.Name = "Form1"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Modbus Extraction"
+        Me.Text = "Automated Modbus Extraction"
         Me.GroupBox1.ResumeLayout(False)
         Me.GroupBox1.PerformLayout()
         CType(Me.DataGridView1, System.ComponentModel.ISupportInitialize).EndInit()

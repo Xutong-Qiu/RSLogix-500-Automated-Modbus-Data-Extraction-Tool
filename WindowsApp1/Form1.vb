@@ -128,6 +128,19 @@ Public Class Form1
         Dim content As List(Of String()) = db.GetInvalidMapping()
         Dim exePath As String = System.Windows.Forms.Application.StartupPath
         Dim filePath As String = Path.Combine(exePath, "invalid.csv")
+        If File.Exists(filePath) Then
+            Try
+                Using fs As FileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.None)
+                    ' If the file can be opened, it is not in use
+                End Using
+            Catch ex As IOException
+                ' If an IOException occurred, the file is in use
+                MessageBox.Show("File is being used by other applications.")
+            End Try
+        Else
+            Dim fs = File.Create(filePath)
+            fs.Close()
+        End If
         WriteToCSV(content, {"Address", "Mapping To", "Mapped To"}, filePath)
         DisplayList(content, {"Address", "Mapping To", "Mapped To"})
     End Sub
@@ -150,7 +163,7 @@ Public Class Form1
         WaitForBGTask()
         db.LoadMapping()
         find_invalid_mapping_button.Enabled = True
-        DisplayList(WriteToProject(logixObj, db), {"Address", "Name", "Source", "Description"})
+        DisplayListWithEditing(WriteToProject(logixObj, db), {"Address", "Name", "Source", "Description"})
     End Sub
 
     Private Sub DisplayList(list As List(Of String()), cols As String())
@@ -170,7 +183,71 @@ Public Class Form1
 
         DataGridView1.RowHeadersVisible = False
         DataGridView1.AutoResizeColumns()
+        DataGridView1.AllowUserToAddRows = False
     End Sub
+
+    Private Sub DisplayListWithEditing(list As List(Of String()), cols As String())
+        DataGridView1.Rows.Clear()
+        DataGridView1.Columns.Clear()
+
+        ' Assuming the string arrays all have the same length.
+        For Each colName As String In cols
+            Dim col As New DataGridViewTextBoxColumn
+            col.Name = colName
+            DataGridView1.Columns.Add(col)
+        Next
+
+        For Each item() As String In list
+            DataGridView1.Rows.Add(item)
+        Next
+
+        DataGridView1.RowHeadersVisible = False
+        DataGridView1.ReadOnly = False
+        DataGridView1.AutoResizeColumns()
+        DataGridView1.AllowUserToAddRows = False
+    End Sub
+
+    Private Sub DataGridView1_CellBeginEdit(sender As Object, e As DataGridViewCellCancelEventArgs) Handles DataGridView1.CellBeginEdit
+        ' Determine which column and row to allow editing
+        Dim columnIndexToAllowEdit As Integer = 3 ' Adjust this to the column index you want to allow editing (0-based index)
+        Dim cellContent As String = DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).Value
+        If e.ColumnIndex = columnIndexToAllowEdit AndAlso DataGridView1.Columns(columnIndexToAllowEdit).HeaderText = "Description" Then
+            ' Allow editing for the specified cell
+            If cellContent Is Nothing OrElse cellContent = "" Then
+                e.Cancel = False
+                Dim desp As Object = DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).Value
+                Dim addr As Object = DataGridView1.Rows(e.RowIndex).Cells(0).Value
+                db.UpdateDescription(addr, desp)
+            Else
+                e.Cancel = True
+            End If
+        Else
+            e.Cancel = True
+        End If
+    End Sub
+
+    Private Sub DataGridView1_CanEdit(sender As Object, e As DataGridViewCellEventArgs) Handles DataGridView1.CellClick, DataGridView1.CellEnter
+        Dim editableCols As New HashSet(Of Integer)({1, 3})
+        If editableCols.Contains(e.ColumnIndex) AndAlso DataGridView1.Columns(3).HeaderText = "Description" Then
+            If e.RowIndex >= 0 AndAlso e.ColumnIndex >= 0 AndAlso Not DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).ReadOnly Then
+                ' Begin editing the clicked cell
+                DataGridView1.BeginEdit(False)
+            End If
+        End If
+
+    End Sub
+    Private Sub DataGridView1_CellFormatting(sender As Object, e As DataGridViewCellFormattingEventArgs) Handles DataGridView1.CellFormatting
+        ' Check if the cell's value is empty or Nothing
+        Dim columnHeaderText As String = DataGridView1.Columns(e.ColumnIndex).HeaderText
+        If (columnHeaderText = "Name" OrElse columnHeaderText = "Description") AndAlso (e.ColumnIndex = 3 OrElse e.ColumnIndex = 1) Then
+            If e.Value Is Nothing OrElse String.IsNullOrEmpty(e.Value.ToString()) Then
+                ' Change the background color of the empty cell to red
+                e.CellStyle.BackColor = Color.Red
+                e.CellStyle.ForeColor = Color.White ' Optionally, you can also set the text color for better visibility
+            End If
+        End If
+    End Sub
+
 
     Private Sub load_ref_table_Click(sender As Object, e As EventArgs) Handles load_ref_table_button.Click
         Dim openFileDialog As New OpenFileDialog

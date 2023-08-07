@@ -12,20 +12,6 @@ Public Module IOHandler
     ''' <param name="path">The path of the target file</param>
     ''' <returns>A boolean that indicates whether the operation is successful or not.</returns>
     Public Function WriteToCSV(data As List(Of String()), columnNames As String(), path As String) As Boolean
-        If File.Exists(path) Then
-            Try
-                Using fs As FileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.None)
-                    ' If the file can be opened, it is not in use
-                End Using
-            Catch ex As IOException
-                ' If an IOException occurred, the file is in use
-                MessageBox.Show("File is being used by other applications.")
-                Return False
-            End Try
-        Else
-            Dim fs = File.Create(path)
-            fs.Close()
-        End If
         Using sw As New StreamWriter(path)
             sw.WriteLine(String.Join(",", columnNames))
 
@@ -51,12 +37,15 @@ Public Module IOHandler
             Dim record = proj.AddrSymRecords.GetRecordViaAddrOrSym(addr, 0)
             If record Is Nothing Then
                 record = proj.AddrSymRecords.add()
-                'MessageBox.Show("creating new addr: " + s)
                 record.SetAddress(addr)
                 record.SetScope(0)
             End If 'got the des addr instance
-            record.SetSymbol(db.GetTagName(addr))
-            record.SetDescription(db.GetDescription(addr))
+            If Not record.SetSymbol(db.GetTagName(addr)) AndAlso db.GetTagName(addr) = "" Then
+                MessageBox.Show("Unable to set Name: " & db.GetTagName(addr) & "Address: " & addr)
+            End If
+            If Not record.SetDescription(db.GetDescription(addr)) AndAlso db.GetDescription(addr) = "" Then
+                MessageBox.Show("Unable to set Description: " & db.GetDescription(addr) & "Address: " & addr)
+            End If
             Dim str As String = ""
             For Each src In db.GetMappingSrc(addr)
                 str &= src + " "

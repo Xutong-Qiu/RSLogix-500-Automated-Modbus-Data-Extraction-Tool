@@ -90,7 +90,7 @@
   <ItemGroup>
     <Compile Include="AddressSolver.vb" />
     <Compile Include="CoilLogicAnalyzer.vb" />
-    <Compile Include="CusComparer.vb" />
+    <Compile Include="CusComparator.vb" />
     <Compile Include="DataEntry.vb" />
     <Compile Include="EventHandler.vb" />
     <Compile Include="My Project\Resources.Designer.vb">

@@ -117,7 +117,11 @@ Public Class PLC_DB
                             UpdateDescription(des_addr, addrDic(src_addr).Description)
                             addrDic(src_addr).AddMappingTo(des_addr)
                             addrDic(des_addr).AddMappedTo(pair.Item1)
-
+                        ElseIf src_addr = "" Then 'handles exception
+                            If Not ContainEntry(des_addr) Then 'if no mapping target, add mapping target
+                                Add(des_addr)
+                            End If
+                            SetModifiedStatus(des_addr, True)
                         End If
                     Next
                 Next
@@ -200,6 +204,10 @@ Public Class PLC_DB
         For Each addr In l
             addrDic(addr).isModified = False
         Next
+    End Sub
+
+    Public Sub SetModifiedStatus(addr As String, val As Boolean)
+        addrDic(addr).isModified = val
     End Sub
     ''' <summary>
     ''' This function adds a new entry to the database. It has a overload version that

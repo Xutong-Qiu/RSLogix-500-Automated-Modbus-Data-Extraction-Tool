@@ -35,6 +35,8 @@ Public Class DataEntry
             Throw New ArgumentException("Invalid address format: " & address)
         End If
         addr = address
+        desp = ""
+        name = ""
         modified = False
         des = New List(Of String)
         src = New List(Of String)
