@@ -10,8 +10,7 @@ Public Class Form1
     Private db As PLC_DB
     Private BGTask As Thread
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, perform_mapping, find_invalid_mapping_button, load_ref_table_button}
-
+        buttons = New List(Of Windows.Forms.Button) From {Search, display_data_button, find_modbus_mapping_button, find_invalid_mapping_button, load_ref_table_button, modbus_doc, save_button, generate_modbus_doc}
         For Each btn In buttons 'When the software is open. Disable all buttons except load file button
             btn.Enabled = False
         Next
@@ -59,14 +58,19 @@ Public Class Form1
         End If
         'preparing a new database
         db = New PLC_DB(logixObj)
-        StartLoadDBDefaultFile()
         'display rss file
         rss_path.Text = path
-        'enable all buttons
+        'buttons control
         For Each btn In buttons
             btn.Enabled = True
         Next
-        find_invalid_mapping_button.Enabled = False
+        generate_modbus_doc.Enabled = False
+        If db.IsX Then
+            generate_modbus_doc.Enabled = True
+        Else
+            'start background loading
+            StartLoadMapping()
+        End If
         MessageBox.Show("PLC program successfully loaded.")
         Focus() 'Keep the window in the view after closing the message box
     End Sub
@@ -124,8 +128,8 @@ Public Class Form1
         End If
     End Sub
 
-    Private Sub find_invalid_mapping_button_click(sender As Object, e As EventArgs) Handles find_invalid_mapping_button.Click
-        Dim content As List(Of String()) = db.GetInvalidMapping()
+    Private Sub find_exception_mapping_button_click(sender As Object, e As EventArgs) Handles find_invalid_mapping_button.Click
+        Dim content As List(Of String()) = db.GetExceptionMapping()
         Dim exePath As String = System.Windows.Forms.Application.StartupPath
         Dim filePath As String = Path.Combine(exePath, "invalid.csv")
         If File.Exists(filePath) Then
@@ -141,8 +145,9 @@ Public Class Form1
             Dim fs = File.Create(filePath)
             fs.Close()
         End If
-        WriteToCSV(content, {"Address", "Mapping To", "Mapped To"}, filePath)
-        DisplayList(content, {"Address", "Mapping To", "Mapped To"})
+        WriteToCSV(content, {"Address", "Name", "Source", "Description"}, filePath)
+        DisplayList(content, {"Address", "Name", "Source", "Description"}, True)
+        DataGridView1.ReadOnly = False
     End Sub
 
     ' Handle the KeyDown event for your textbox
@@ -155,19 +160,27 @@ Public Class Form1
     End Sub
 
     Private Sub display_data_button_click(sender As Object, e As EventArgs) Handles display_data_button.Click
-        DisplayList(db.DBtoList(), {"Address", "Name", "Description"})
+        DisplayList(db.DBtoList(), {"Address", "Name", "Description"}, False)
         Return
     End Sub
 
-    Private Sub perform_mapping_Click(sender As Object, e As EventArgs) Handles perform_mapping.Click
+    Private Sub find_mapping_Click(sender As Object, e As EventArgs) Handles find_modbus_mapping_button.Click
         WaitForBGTask()
-        db.LoadMapping()
-        find_invalid_mapping_button.Enabled = True
-        DisplayList(WriteToProject(logixObj, db), {"Address", "Name", "Source", "Description"})
+        Dim modifiedList = db.GetModbusList()
+        Dim content = New List(Of String())
+        For Each addr In modifiedList
+            Dim str As String = ""
+            For Each src In db.GetMappingSrc(addr)
+                str &= src + " "
+            Next
+            content.Add({addr, db.GetTagName(addr), str, db.GetDescription(addr)})
+        Next
+        content.Sort(New DataEntryComparer())
+        DisplayList(content, {"Address", "Name", "Source", "Description"}, True)
         DataGridView1.ReadOnly = False
     End Sub
 
-    Private Sub DisplayList(list As List(Of String()), cols As String())
+    Private Sub DisplayList(list As List(Of String()), cols As String(), hightlight As Boolean)
         DataGridView1.Rows.Clear()
         DataGridView1.Columns.Clear()
 
@@ -179,7 +192,15 @@ Public Class Form1
         Next
 
         For Each item() As String In list
-            DataGridView1.Rows.Add(item)
+            Dim row As DataGridViewRow = DataGridView1.Rows(DataGridView1.Rows.Add(item))
+            If hightlight Then
+                If item(1) = "" Then
+                    row.Cells(1).Style.BackColor = Color.LightSalmon
+                End If
+                If item(3) = "" Then
+                    row.Cells(3).Style.BackColor = Color.LightSalmon
+                End If
+            End If
         Next
 
         DataGridView1.RowHeadersVisible = False
@@ -224,17 +245,6 @@ Public Class Form1
         db.UpdateDescription(addr, desp)
         DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).Style.BackColor = Color.LightBlue
     End Sub
-    Private Sub DataGridView1_CellFormatting(sender As Object, e As DataGridViewCellFormattingEventArgs) Handles DataGridView1.CellFormatting
-        ' Check if the cell's value is empty or Nothing
-        Dim columnHeaderText As String = DataGridView1.Columns(e.ColumnIndex).HeaderText
-        If (columnHeaderText = "Name" OrElse columnHeaderText = "Description") AndAlso (e.ColumnIndex = 3 OrElse e.ColumnIndex = 1) Then
-            If e.Value Is Nothing OrElse String.IsNullOrEmpty(e.Value.ToString()) Then
-                ' Change the background color of the empty cell to red
-                e.CellStyle.BackColor = Color.Red
-                e.CellStyle.ForeColor = Color.White ' Optionally, you can also set the text color for better visibility
-            End If
-        End If
-    End Sub
 
 
     Private Sub load_ref_table_Click(sender As Object, e As EventArgs) Handles load_ref_table_button.Click
@@ -278,19 +288,10 @@ Public Class Form1
     End Sub
 
 
-    Private Sub StartLoadDBDefaultFile()
-        BGTask = New Thread(AddressOf LoadDefaultFile)
+    Private Sub StartLoadMapping()
+        BGTask = New Thread(AddressOf db.LoadMapping)
         BGTask.Start()
     End Sub
-
-    Private Sub LoadDefaultFile()
-        Try
-            db.LoadDefaultTagNameRef()
-        Catch ex As FileNotFoundException
-            Return
-        End Try
-    End Sub
-
 
     Private Sub WaitForBGTask()
         ' Use Join to wait for the background thread to complete
@@ -300,11 +301,31 @@ Public Class Form1
     End Sub
 
     Private Sub modbus_doc_button_Click(sender As Object, e As EventArgs) Handles modbus_doc.Click
+        WaitForBGTask()
+        Dim exePath As String = System.Windows.Forms.Application.StartupPath
+        Dim filePath As String = Path.Combine(exePath, "Modbus Address.xlsx")
         Dim content = db.GetModbusData()
-        DisplayList(content, {"Address", "Tag Name", "Description"})
+        DisplayList(content, {"Address", "Tag Name", "Description"}, False)
+        generate_modbus_doc.Enabled = True
     End Sub
 
-    Private Sub save_button_Click(sender As Object, e As EventArgs) Handles save_button.Click
-        WriteToProject(logixObj, db)
+    Private Sub save_rss_button_Click(sender As Object, e As EventArgs) Handles save_button.Click
+        Dim result As DialogResult = MessageBox.Show("Are you sure to save changes to the RSS file?", "Save", MessageBoxButtons.YesNo)
+        If result = DialogResult.Yes Then
+            WaitForBGTask()
+            WriteToProject(logixObj, db)
+            logixObj.Save(True, True)
+        ElseIf result = DialogResult.No Then
+            Return
+        End If
+    End Sub
+
+    Private Sub generate_modbus_doc_Click(sender As Object, e As EventArgs) Handles generate_modbus_doc.Click
+        WaitForBGTask()
+        Dim exePath As String = System.Windows.Forms.Application.StartupPath
+        Dim filePath As String = Path.Combine(exePath, "Modbus Address.xlsx")
+        Dim content = db.GetModbusData()
+        GenerateModbusDoc(content, {"Address", "Tag Name", "Description"}, filePath)
+        Focus()
     End Sub
 End Class

@@ -121,7 +121,7 @@ Public Module CoilLogicAnalyzer
     Private Function HandlesExceptionMapping(root As Node, results As List(Of Tuple(Of String, String)), bit As Integer) As Boolean
         Dim cur As Node = root
         If cur IsNot Nothing AndAlso cur.Ins = "OR" Then
-            results.Add(New Tuple(Of String, String)("Exception", Tune(cur.Args(0)) & "/" & bit))
+            results.Add(New Tuple(Of String, String)("Logic involved", Tune(cur.Args(0)) & "/" & bit))
             Return True
         ElseIf cur Is Nothing Then
             Return True

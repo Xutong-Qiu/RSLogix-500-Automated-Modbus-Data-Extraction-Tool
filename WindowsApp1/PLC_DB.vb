@@ -81,14 +81,12 @@ Public Class PLC_DB
     Public Sub LoadMapping()
         coil_start = False
         modbusList = New List(Of String)
-        If tag_ref_list.Count = 0 Then
-            Try
-                LoadDefaultTagNameRef()
-            Catch ex As FileNotFoundException
-                MessageBox.Show(ex.Message)
-                Return
-            End Try
-        End If
+        Try
+            LoadDefaultTagNameRef()
+        Catch ex As FileNotFoundException
+            MessageBox.Show(ex.Message)
+            Return
+        End Try
         Dim numOfProg = programs.Count()
         Dim modbus_file As Object
         For i As Integer = 0 To numOfProg - 1
@@ -99,6 +97,7 @@ Public Class PLC_DB
                     Dim mappings = ExtractMapping(modbus_file.GetRungAsAscii(j)) 'for each rung, extract mappings embedded in it
                     For Each pair In mappings 'for each mapping pair
                         Dim extension As String = GetExtension(pair.Item1)
+                        Dim srcInfo As String = pair.Item1
                         Dim src_addr As String = Tune(pair.Item1)
                         Dim des_addr As String = pair.Item2
                         If ContainEntry(src_addr) Then 'if db contain src
@@ -106,24 +105,30 @@ Public Class PLC_DB
                             If src_name Is Nothing OrElse src_name = "ALWAYS_OFF" Then 'skip always_off
                                 Continue For
                             End If
+                            modbusList.Add(des_addr)
                             If Not ContainEntry(des_addr) Then 'if no mapping target, add mapping target
                                 Add(des_addr)
                             End If
-                            Dim target_name As String = ChangeName(src_name, extension)
-                            If target_name.Length > 20 Then
-                                MessageBox.Show("Tag Name exceeds 20 characters: " & target_name)
-                            Else
-                                UpdateTagName(des_addr, target_name)
-                            End If
-                            UpdateDescription(des_addr, addrDic(src_addr).Description)
-                            modbusList.Add(des_addr)
                             addrDic(src_addr).AddMappingTo(des_addr)
                             addrDic(des_addr).AddMappedTo(pair.Item1)
-                        ElseIf src_addr = "" Then 'handles exception
+                            If GetMappingSrc(des_addr).Count = 1 Then
+                                Dim target_name As String = ChangeName(src_name, extension)
+                                If target_name.Length > 20 Then
+                                    MessageBox.Show("Tag Name exceeds 20 characters: " & target_name)
+                                Else
+                                    UpdateTagName(des_addr, target_name)
+                                End If
+                                UpdateDescription(des_addr, addrDic(src_addr).Description)
+                            Else
+                                UpdateTagName(des_addr, "")
+                                UpdateDescription(des_addr, "")
+                            End If
+                        Else 'handles exception
                             If Not ContainEntry(des_addr) Then 'if no mapping target, add mapping target
                                 Add(des_addr)
                             End If
                             modbusList.Add(des_addr)
+                            addrDic(des_addr).AddMappedTo(srcInfo)
                         End If
                     Next
                 Next
@@ -134,7 +139,9 @@ Public Class PLC_DB
     End Sub
 
     Public Function GetModbusData() As List(Of String())
-        FindModbusData()
+        If modbusList.Count = 0 Then
+            FindModbusData()
+        End If
         Dim content = New List(Of String())
         Dim comp As New AddrComparer
         modbusList.Sort(comp)
@@ -367,6 +374,21 @@ Public Class PLC_DB
         Return content
     End Function
 
+    Public Function GetExceptionMapping() As List(Of String())
+        Dim content = New List(Of String())
+        For Each addr In modbusList
+            Dim src As String = ""
+            For Each target In GetMappingSrc(addr)
+                src &= target + " "
+            Next
+            If GetTagName(addr) = "" OrElse GetDescription(addr) = "" Then
+                content.Add({addr, GetTagName(addr), src, GetDescription(addr)})
+            End If
+        Next
+        content.Sort(New DataEntryComparer)
+        Return content
+    End Function
+
     Public Sub LoadDefaultTagNameRef()
         Dim exePath As String = System.Windows.Forms.Application.StartupPath
         Dim filePath As String = Path.Combine(exePath, "ref.xlsx")
@@ -386,4 +408,13 @@ Public Class PLC_DB
         End Set
     End Property
 
+    Public Function IsX() As Boolean
+        FindModbusData()
+        For Each addr In modbusList
+            If GetTagName(addr) Is Nothing Or GetTagName(addr) = "" Then
+                Return False
+            End If
+        Next
+        Return True
+    End Function
 End Class

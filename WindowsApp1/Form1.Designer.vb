@@ -13,7 +13,7 @@ Partial Class Form1
     Friend WithEvents find_invalid_mapping_button As Button
     Friend WithEvents display_data_button As Button
     Friend WithEvents DataGridView1 As DataGridView
-    Friend WithEvents perform_mapping As Button
+    Friend WithEvents find_modbus_mapping_button As Button
 
     'Form overrides dispose to clean up the component list.
     <System.Diagnostics.DebuggerNonUserCode()>
@@ -46,7 +46,7 @@ Partial Class Form1
         Me.find_invalid_mapping_button = New System.Windows.Forms.Button()
         Me.display_data_button = New System.Windows.Forms.Button()
         Me.DataGridView1 = New System.Windows.Forms.DataGridView()
-        Me.perform_mapping = New System.Windows.Forms.Button()
+        Me.find_modbus_mapping_button = New System.Windows.Forms.Button()
         Me.load_ref_table_button = New System.Windows.Forms.Button()
         Me.RSS_file = New System.Windows.Forms.Label()
         Me.rss_path = New System.Windows.Forms.Label()
@@ -55,6 +55,7 @@ Partial Class Form1
         Me.ref_file = New System.Windows.Forms.Label()
         Me.modbus_doc = New System.Windows.Forms.Button()
         Me.save_button = New System.Windows.Forms.Button()
+        Me.generate_modbus_doc = New System.Windows.Forms.Button()
         Me.GroupBox1.SuspendLayout()
         CType(Me.DataGridView1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.GroupBox2.SuspendLayout()
@@ -128,27 +129,27 @@ Partial Class Form1
         Me.GroupBox1.Controls.Add(Me.Label1)
         Me.GroupBox1.Controls.Add(Me.Search)
         Me.GroupBox1.Controls.Add(Me.TextBox1)
-        Me.GroupBox1.Location = New System.Drawing.Point(12, 413)
+        Me.GroupBox1.Location = New System.Drawing.Point(12, 457)
         Me.GroupBox1.Name = "GroupBox1"
-        Me.GroupBox1.Size = New System.Drawing.Size(157, 176)
+        Me.GroupBox1.Size = New System.Drawing.Size(157, 132)
         Me.GroupBox1.TabIndex = 10
         Me.GroupBox1.TabStop = False
         Me.GroupBox1.Text = "Search by Address"
         '
         'find_invalid_mapping_button
         '
-        Me.find_invalid_mapping_button.Location = New System.Drawing.Point(12, 136)
+        Me.find_invalid_mapping_button.Location = New System.Drawing.Point(12, 153)
         Me.find_invalid_mapping_button.Name = "find_invalid_mapping_button"
-        Me.find_invalid_mapping_button.Size = New System.Drawing.Size(157, 22)
+        Me.find_invalid_mapping_button.Size = New System.Drawing.Size(157, 33)
         Me.find_invalid_mapping_button.TabIndex = 11
-        Me.find_invalid_mapping_button.Text = "Find Invalid Mapping"
+        Me.find_invalid_mapping_button.Text = "Display Exception Mappings"
         Me.find_invalid_mapping_button.UseVisualStyleBackColor = True
         '
         'display_data_button
         '
         Me.display_data_button.Location = New System.Drawing.Point(12, 78)
         Me.display_data_button.Name = "display_data_button"
-        Me.display_data_button.Size = New System.Drawing.Size(157, 23)
+        Me.display_data_button.Size = New System.Drawing.Size(157, 30)
         Me.display_data_button.TabIndex = 12
         Me.display_data_button.Text = "Display Database"
         Me.display_data_button.UseVisualStyleBackColor = True
@@ -165,18 +166,18 @@ Partial Class Form1
         Me.DataGridView1.Size = New System.Drawing.Size(682, 490)
         Me.DataGridView1.TabIndex = 13
         '
-        'perform_mapping
+        'find_modbus_mapping_button
         '
-        Me.perform_mapping.Location = New System.Drawing.Point(12, 107)
-        Me.perform_mapping.Name = "perform_mapping"
-        Me.perform_mapping.Size = New System.Drawing.Size(157, 23)
-        Me.perform_mapping.TabIndex = 14
-        Me.perform_mapping.Text = "Perform Mapping"
-        Me.perform_mapping.UseVisualStyleBackColor = True
+        Me.find_modbus_mapping_button.Location = New System.Drawing.Point(12, 114)
+        Me.find_modbus_mapping_button.Name = "find_modbus_mapping_button"
+        Me.find_modbus_mapping_button.Size = New System.Drawing.Size(157, 33)
+        Me.find_modbus_mapping_button.TabIndex = 14
+        Me.find_modbus_mapping_button.Text = "Display Modbus Mappings"
+        Me.find_modbus_mapping_button.UseVisualStyleBackColor = True
         '
         'load_ref_table_button
         '
-        Me.load_ref_table_button.Location = New System.Drawing.Point(12, 213)
+        Me.load_ref_table_button.Location = New System.Drawing.Point(12, 340)
         Me.load_ref_table_button.Name = "load_ref_table_button"
         Me.load_ref_table_button.Size = New System.Drawing.Size(157, 22)
         Me.load_ref_table_button.TabIndex = 15
@@ -236,32 +237,42 @@ Partial Class Form1
         '
         'modbus_doc
         '
-        Me.modbus_doc.Location = New System.Drawing.Point(12, 254)
+        Me.modbus_doc.Location = New System.Drawing.Point(12, 192)
         Me.modbus_doc.Name = "modbus_doc"
-        Me.modbus_doc.Size = New System.Drawing.Size(157, 22)
+        Me.modbus_doc.Size = New System.Drawing.Size(157, 32)
         Me.modbus_doc.TabIndex = 19
         Me.modbus_doc.Text = "Modbus Doc"
         Me.modbus_doc.UseVisualStyleBackColor = True
         '
         'save_button
         '
-        Me.save_button.Location = New System.Drawing.Point(12, 352)
+        Me.save_button.Location = New System.Drawing.Point(12, 368)
         Me.save_button.Name = "save_button"
-        Me.save_button.Size = New System.Drawing.Size(157, 22)
+        Me.save_button.Size = New System.Drawing.Size(157, 26)
         Me.save_button.TabIndex = 20
-        Me.save_button.Text = "Save"
+        Me.save_button.Text = "Save PLC"
         Me.save_button.UseVisualStyleBackColor = True
+        '
+        'generate_modbus_doc
+        '
+        Me.generate_modbus_doc.Location = New System.Drawing.Point(12, 400)
+        Me.generate_modbus_doc.Name = "generate_modbus_doc"
+        Me.generate_modbus_doc.Size = New System.Drawing.Size(157, 26)
+        Me.generate_modbus_doc.TabIndex = 21
+        Me.generate_modbus_doc.Text = "Generate Doc"
+        Me.generate_modbus_doc.UseVisualStyleBackColor = True
         '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(869, 601)
+        Me.Controls.Add(Me.generate_modbus_doc)
         Me.Controls.Add(Me.save_button)
         Me.Controls.Add(Me.modbus_doc)
         Me.Controls.Add(Me.GroupBox2)
         Me.Controls.Add(Me.load_ref_table_button)
-        Me.Controls.Add(Me.perform_mapping)
+        Me.Controls.Add(Me.find_modbus_mapping_button)
         Me.Controls.Add(Me.DataGridView1)
         Me.Controls.Add(Me.display_data_button)
         Me.Controls.Add(Me.find_invalid_mapping_button)
@@ -288,4 +299,5 @@ Partial Class Form1
     Friend WithEvents ref_file As Label
     Friend WithEvents modbus_doc As Button
     Friend WithEvents save_button As Button
+    Friend WithEvents generate_modbus_doc As Button
 End Class

@@ -23,16 +23,70 @@ Public Module IOHandler
         Return True
     End Function
 
+
+    Public Sub GenerateModbusDoc(content As List(Of String()), columnNames As String(), filePath As String)
+        Dim excelApp As New Application()
+        Dim workbook As Workbook = excelApp.Workbooks.Add()
+        ' Add a new sheet at the specified index
+        Dim coilSheet As Worksheet = CType(workbook.Sheets.Add(), Worksheet)
+        Dim regSheet As Worksheet = CType(workbook.Sheets.Add(), Worksheet)
+        coilSheet.Name = "Coil"
+        regSheet.Name = "Register"
+        ' Write column names
+        For colIndex As Integer = 0 To columnNames.Length - 1
+            regSheet.Cells(1, colIndex + 1).Value = columnNames(colIndex)
+        Next
+        For colIndex As Integer = 0 To columnNames.Length - 1
+            coilSheet.Cells(1, colIndex + 1).Value = columnNames(colIndex)
+        Next
+
+        Dim regRowIndex As Integer = 2
+        Dim coilRowIndex As Integer = 2
+        ' Write content
+        For rowIndex As Integer = 0 To content.Count - 1
+            Dim rowData As String() = content(rowIndex)
+            If CSng(rowData(0)) < 1000 Then
+                For colIndex As Integer = 0 To rowData.Length - 1
+                    regSheet.Cells(regRowIndex, colIndex + 1).Value = rowData(colIndex)
+                Next
+                regRowIndex += 1
+            Else
+                For colIndex As Integer = 0 To rowData.Length - 1
+                    coilSheet.Cells(coilRowIndex, colIndex + 1).Value = rowData(colIndex)
+                Next
+                coilRowIndex += 1
+            End If
+        Next
+
+
+        Dim defaultSheet As Worksheet = CType(workbook.Sheets("Sheet1"), Worksheet)
+        defaultSheet.Delete()
+
+        ' Save the workbook
+        Try
+            workbook.SaveAs(filePath)
+            MessageBox.Show("Successfully written to " & filePath)
+        Catch ex As COMException
+            MessageBox.Show("File not saved.")
+        End Try
+
+        workbook.Close(False)
+        excelApp.Quit()
+
+        ReleaseObject(regSheet)
+        ReleaseObject(coilSheet)
+        ReleaseObject(workbook)
+        ReleaseObject(excelApp)
+
+    End Sub
+
     ''' <summary>
     ''' This function applies all changes in the database to the RSS project file.
     ''' </summary>
     ''' <param name="proj">The RSS project</param>
     ''' <param name="db">The database</param>
-    ''' <returns>A list of string array including all changed data entry which can be
-    ''' then displayed on the datagrid using DisplayList().</returns>
-    Public Function WriteToProject(proj As Object, db As PLC_DB) As List(Of String())
+    Public Sub WriteToProject(proj As Object, db As PLC_DB)
         Dim modifiedList = db.GetModbusList()
-        Dim content = New List(Of String())
         For Each addr In modifiedList
             Dim record = proj.AddrSymRecords.GetRecordViaAddrOrSym(addr, 0)
             If record Is Nothing Then
@@ -46,16 +100,8 @@ Public Module IOHandler
             If Not record.SetDescription(db.GetDescription(addr)) AndAlso db.GetDescription(addr) = "" Then
                 MessageBox.Show("Unable to set Description: " & db.GetDescription(addr) & "Address: " & addr)
             End If
-            Dim str As String = ""
-            For Each src In db.GetMappingSrc(addr)
-                str &= src + " "
-            Next
-            content.Add({addr, db.GetTagName(addr), str, db.GetDescription(addr)})
         Next
-        'db.ChangeModifiedStatus(modifiedList)
-        content.Sort(New DataEntryComparer())
-        Return content
-    End Function
+    End Sub
 
     ''' <summary>
     ''' This function loads a RSS file

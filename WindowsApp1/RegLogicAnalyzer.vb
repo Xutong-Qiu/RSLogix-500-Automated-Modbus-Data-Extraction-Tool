@@ -133,8 +133,8 @@ Public Module RegLogicAnalyzer
             Dim src As String = cur.Args(0)
             Dim des As String = Tune(cur.Args(1))
             Dim offset As Integer = CSng(cur.Args(2)) - 1
-            results.Add(New Tuple(Of String, String)(src, des))
-            results.Add(New Tuple(Of String, String)(src, AddrAdder(des, offset)))
+            results.Add(New Tuple(Of String, String)(src, des)) 'The first one gets the name
+            results.Add(New Tuple(Of String, String)("CPW", AddrAdder(des, offset))) 'the second one treated as an exception
             Return True
         End If
         Return False
