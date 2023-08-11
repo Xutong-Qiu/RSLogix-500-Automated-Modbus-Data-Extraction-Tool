@@ -1,6 +1,7 @@
 ﻿Imports System.IO
 Imports System.Threading
 
+'This project has been converted in to C#. This project has been deprecated.
 Public Class Form1
 
     Private buttons As New List(Of Windows.Forms.Button)
